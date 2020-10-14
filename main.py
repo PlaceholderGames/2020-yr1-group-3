@@ -6,11 +6,14 @@
 import pygame
 import util
 
-resolution = [800, 600]
+resolution = {
+    'height': 800,
+    'width': 600
+}
 is_running = True
 
 # Create pygame window with title and icon
-screen = pygame.display.set_mode((resolution[0], resolution[1]))
+screen = pygame.display.set_mode((resolution['width'], resolution['height']))
 pygame.display.set_caption("The BeerZerker")
 
 # All textures (inclusive and exclusive of gameplay) get initialized and assigned
