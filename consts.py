@@ -9,11 +9,23 @@ import enum
 
 pygame.font.init()
 
+
+# All screens
+class Screens(enum.Enum):
+    MAIN_MENU = 0
+    SETTINGS = 1
+    CREDITS = 2
+    GAME = 3
+    QUIT = 4
+
+
+# Window dimensions
 DIMENSIONS = {
     'width': 800,
     'height': 600
 }
 
+# All textures get initialized and assigned
 TEXTURES = {
     # 'window_icon': util.load_image("assets/textures/gui/icon.png")
     # 'player_spritesheet': util.load_image("assets/textures/spritesheets/player.png"),
@@ -33,15 +45,7 @@ FONTS = {
     'Pixellari': util.load_font("assets/fonts/Pixellari.ttf", 24, False)
 }
 
-
-class Screens(enum.Enum):
-    MAIN_MENU = 0
-    SETTINGS = 1
-    CREDITS = 2
-    GAME = 3
-    QUIT = 4
-
-
+# All buttons in the game, organized by screen
 BUTTONS = {
     'MAIN_MENU': {
         'play': util.Button((DIMENSIONS['width'] / 2) - 64, 82, 128, 64, "Play", Screens.GAME),
