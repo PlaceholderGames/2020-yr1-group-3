@@ -4,7 +4,7 @@
 """
 import pygame
 import util
-from consts import TEXTURES, FONTS, Screens, BUTTONS, DIMENSIONS
+from consts import TEXTURES, FONTS, Screens, BUTTONS, DIMENSIONS, SETTINGS, CREDITS, CHECKBOXES
 import json
 import os
 
@@ -17,12 +17,8 @@ pygame.display.set_caption("The BeerZerker")
 # Initialize pygame
 pygame.init()
 
-_settings = { "debug": False }
-
 if not os.path.exists("settings.json"):
-    with open("settings.json", "w") as settingsFile:
-        json.dump(_settings, settingsFile)
-        settingsFile.close()
+    util.save_settings()
 
 
 # Uncomment the following line once we have a icon for the game
@@ -70,6 +66,10 @@ def main_menu_screen():
 def setting_screen():
     util.render(screen, util.text(f"Settings", FONTS['Pixellari']), (DIMENSIONS['width'] / 2) - len("Settings"), 16)
 
+    CHECKBOXES['SETTINGS']['fullscreen'].canvas = screen
+    CHECKBOXES['SETTINGS']['fullscreen'].font = FONTS['Pixellari']
+    CHECKBOXES['SETTINGS']['fullscreen'].draw()
+
 
 # Function to display Credit screen content
 def credit_screen():
@@ -80,6 +80,7 @@ def credit_screen():
     util.render(screen, util.text(credits_title_str, FONTS['Pixellari']),
                 (DIMENSIONS['width'] / 2) - (credits_title_width / 2), 64)
 
+    """
     # Lead Programmer
     #
     lead_programmer_str = "Lead Programmer:"
@@ -91,47 +92,19 @@ def credit_screen():
     lead_programmer_person_width, lead_programmer_person_height = FONTS["Pixellari"].size(lead_programmer_person_str)
     util.render(screen, util.text(lead_programmer_person_str, FONTS['Pixellari']),
                 (DIMENSIONS['width'] / 2) - (lead_programmer_person_width / 2), 132 + lead_programmer_height)
+    """
 
-    # Programming
-    #
-    programming_str = "Programming:"
-    programming_width, programming_height = FONTS["Pixellari"].size(programming_str)
-    util.render(screen, util.text(programming_str, FONTS['Pixellari']),
-                (DIMENSIONS['width'] / 2) - (programming_width / 2), 210)
+    CREDITS['LEAD_PROGRAMMER'].canvas = screen
+    CREDITS['LEAD_PROGRAMMER'].draw()
 
-    programmer_person_1_str = "Bartosz Swieszkowski"
-    programmer_person_1_width, programmer_person_1_height = FONTS["Pixellari"].size(programmer_person_1_str)
-    util.render(screen, util.text(programmer_person_1_str, FONTS['Pixellari']),
-                (DIMENSIONS['width'] / 2) - (programmer_person_1_width / 2), 214 + programmer_person_1_height)
+    CREDITS['PROGRAMMING'].canvas = screen
+    CREDITS['PROGRAMMING'].draw()
 
-    programmer_person_2_str = "Conner Hughes"
-    programmer_person_2_width, programmer_person_2_height = FONTS["Pixellari"].size(programmer_person_2_str)
-    util.render(screen, util.text(programmer_person_2_str, FONTS['Pixellari']),
-                (DIMENSIONS['width'] / 2) - (programmer_person_2_width / 2), 242 + programmer_person_2_height)
+    CREDITS['LEAD_ARTIST'].canvas = screen
+    CREDITS['LEAD_ARTIST'].draw()
 
-    # Lead Artist
-    #
-    lead_artist_str = "Lead Artist:"
-    lead_artist_width, lead_artist_height = FONTS["Pixellari"].size(lead_artist_str)
-    util.render(screen, util.text(lead_artist_str, FONTS['Pixellari']),
-                (DIMENSIONS['width'] / 2) - (lead_artist_width / 2), 320)
-
-    lead_artist_person_str = "Conner Hughes"
-    lead_artist_person_width, lead_artist_person_height = FONTS["Pixellari"].size(lead_artist_person_str)
-    util.render(screen, util.text(lead_artist_person_str, FONTS['Pixellari']),
-                (DIMENSIONS['width'] / 2) - (lead_artist_person_width / 2), 324 + lead_artist_height)
-
-    # Concept Artist
-    #
-    concept_artist_str = "Concept Artist:"
-    concept_artist_width, concept_artist_height = FONTS["Pixellari"].size(concept_artist_str)
-    util.render(screen, util.text(concept_artist_str, FONTS['Pixellari']),
-                (DIMENSIONS['width'] / 2) - (concept_artist_width / 2), 402)
-
-    concept_artist_person_str = "Bartosz Swieszkowski"
-    concept_artist_person_width, concept_artist_person_height = FONTS["Pixellari"].size(concept_artist_person_str)
-    util.render(screen, util.text(concept_artist_person_str, FONTS['Pixellari']),
-                (DIMENSIONS['width'] / 2) - (concept_artist_person_width / 2), 406 + concept_artist_height)
+    CREDITS['CONCEPT_ARTIST'].canvas = screen
+    CREDITS['CONCEPT_ARTIST'].draw()
 
     # Renders back button for credits
     #
@@ -157,7 +130,7 @@ def set_screen(destination):
 while is_running:
     with open("settings.json") as settingFile:
         _settings = json.load(settingFile)
-        debug_mode = _settings["debug"]
+        debug_mode = SETTINGS["DEBUG_MODE"]
         settingFile.close()
 
     # Set mouse variable to the current mouse position
@@ -191,6 +164,14 @@ while is_running:
                     if BUTTONS['MAIN_MENU'][button].can_click():
                         # Change screen to the button destination
                         set_screen(BUTTONS['MAIN_MENU'][button].destination)
+
+            if displaying == Screens.SETTINGS.value:
+
+                # Check for every checkbox in the settings to see if it can be clicked
+                for checkbox in CHECKBOXES['SETTINGS']:
+                    if CHECKBOXES['SETTINGS'][checkbox].can_click():
+                        # Invert state
+                        CHECKBOXES['SETTINGS'][checkbox].state = not CHECKBOXES['SETTINGS'][checkbox].state
 
             # If the screen is currently on the Credits
             if displaying == Screens.CREDITS.value:
