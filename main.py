@@ -5,6 +5,8 @@
 import pygame
 import util
 from consts import TEXTURES, FONTS, Screens, BUTTONS, DIMENSIONS
+import json
+import os
 
 # Create pygame window with title and icon
 screen = pygame.display.set_mode((DIMENSIONS['width'], DIMENSIONS['height']))
@@ -14,6 +16,13 @@ pygame.display.set_caption("The BeerZerker")
 
 # Initialize pygame
 pygame.init()
+
+_settings = { "debug": False }
+
+if not os.path.exists("settings.json"):
+    with open("settings.json", "w") as settingsFile:
+        json.dump(_settings, settingsFile)
+        settingsFile.close()
 
 
 # Uncomment the following line once we have a icon for the game
@@ -130,11 +139,9 @@ def credit_screen():
     BUTTONS['CREDITS']['back'].font = FONTS['Pixellari']
     BUTTONS['CREDITS']['back'].draw()
 
+
 # Determines whether if the game is running
 is_running = True
-
-# Determines if debug content should be enabled
-debug_mode = True
 
 # Determine what screen to render
 displaying = 0
@@ -148,6 +155,11 @@ def set_screen(destination):
 
 # Game loop
 while is_running:
+    with open("settings.json") as settingFile:
+        _settings = json.load(settingFile)
+        debug_mode = _settings["debug"]
+        settingFile.close()
+
     # Set mouse variable to the current mouse position
     mouse = pygame.mouse.get_pos()
 
@@ -177,7 +189,6 @@ while is_running:
                 # Check for every button in the main menu to see if it can be clicked on
                 for button in BUTTONS['MAIN_MENU']:
                     if BUTTONS['MAIN_MENU'][button].can_click():
-
                         # Change screen to the button destination
                         set_screen(BUTTONS['MAIN_MENU'][button].destination)
 
@@ -187,9 +198,11 @@ while is_running:
                 # Check for every button in the credits to see if it can be clicked on
                 for button in BUTTONS['CREDITS']:
                     if BUTTONS['CREDITS'][button].can_click():
-
                         # Change screen to button destination
                         set_screen(BUTTONS['CREDITS'][button].destination)
+
+            if displaying == Screens.QUIT.value:
+                is_running = False
 
         # Checks if window wants to close
         if event.type == pygame.QUIT:
