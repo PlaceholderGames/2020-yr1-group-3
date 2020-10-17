@@ -79,7 +79,6 @@ class Spritesheet(object):
 
 
 class Button:
-
     # Initializes and assigns parameters to Button instance
     def __init__(self, x, y, width, height, text, destination):
         self.font = None
@@ -111,33 +110,38 @@ class Button:
         return (self.get_area()['x'] < mouse[0] < self.get_area()['x'] + self.get_area()['width']) and (
                 self.get_area()['y'] < mouse[1] < self.get_area()['y'] + self.get_area()['height'])
 
+    def click(self, function):
+        if self.can_click():
+            function
+
     # Draws the button with the button texture and button text
     def draw(self):
-        from consts import TEXTURES
+        from consts import TEXTURES, DIMENSIONS
         from util import render, text
         render(self.canvas, pygame.transform.scale(TEXTURES['button'], (self.size['width'], self.size['height'])),
                int(self.position['x']), int(self.position['y']))
-        render(self.canvas, text(self.text, self.font), self.position['x'],
-               (self.position['y'] + (self.size['height'] / 2)))
+
+        text_width, text_height = self.font.size(self.text)
+        render(self.canvas, text(self.text, self.font), (self.position['x'] + (self.size['width'] / 2)) - (text_width / 2),
+               (self.position['y'] + (self.size['height'] / 2)) - (text_height / 2) + 4)
 
 
 class Checkbox:
 
     # Initializes and assigns parameters to Button instance
-    def __init__(self, x, y, width, height, text, destination, state):
-        self.font = None
-        self.color = (1, 1, 1)
+    def __init__(self, x, y, width, height, text, state):
+        from consts import FONTS
+        self.text = text
+
         self.position = {
             'x': x,
             'y': y,
         }
         self.size = {
-            'width': width,
+            'width': 32,
             'height': height
         }
-        self.text = text
         self.canvas = None
-        self.destination = destination,
         self.state = state
 
     # Returns the area of the button
@@ -157,11 +161,15 @@ class Checkbox:
 
     # Draws the button with the button texture and button text
     def draw(self):
-        from consts import TEXTURES
-        from util import render
+        from consts import TEXTURES, FONTS
+        from util import render, text
 
-        TEXTURES['checkbox'].convert()
         checkbox_on = TEXTURES['checkbox'].image_at((0, 0, 32, 32))
-        checkbox_off = TEXTURES['checkbox'].image_at((0, 33, 32, 64))
+        checkbox_off = TEXTURES['checkbox'].image_at((0, 32, 32, 64))
+        pygame.draw.rect(self.canvas, (255, 0, 0),
+                         (self.position['x'], self.position['y'], self.size['width'], self.size['height']))
 
-        render(self.canvas, checkbox_on if self.state else checkbox_off, int(self.position['x']), int(self.position['y']))
+        render(self.canvas, checkbox_on if self.state else checkbox_off, int(self.position['x']),
+               int(self.position['y']))
+        render(self.canvas, text(f"{self.text}", FONTS['Pixellari']), self.position['x'] + 40,
+               self.position['y'] + (self.size['height'] / 2 - (FONTS['Pixellari'].size(self.text)[1] / 2)) + 2)
