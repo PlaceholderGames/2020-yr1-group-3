@@ -1,175 +1,77 @@
 """
     Author:  Nathan Dow / Bitheral
-    Created: 16/10/2020
+    Created: 23/10/2020
 """
 import pygame
+import re
+import consts
+from enums import Screens
+
+pygame.font.init()
+DEFAULT_FONT = pygame.font.Font("assets/fonts/Pixellari.ttf", 32)
 
 
-class Credit:
-    def __init__(self, y, title, members):
-        self.canvas = None
-        self.y = y
-        self.title = title
-        self.members = members
-
-        from consts import FONTS
-        self.title_width, self.title_height = FONTS["Pixellari"].size(self.title)
-
-    def draw(self):
-        import util
-        from consts import DIMENSIONS, FONTS
-        util.render(self.canvas, util.text(self.title, FONTS['Pixellari']),
-                    (DIMENSIONS['width'] / 2) - (self.title_width / 2), self.y)
-
-        for index, member in enumerate(self.members):
-            # print(member)
-            member_width, member_height = FONTS["Pixellari"].size(member)
-            if len(self.members) > 1:
-                util.render(self.canvas, util.text(member, FONTS['Pixellari']),
-                            (DIMENSIONS['width'] / 2) - (member_width / 2), (self.y + (member_height * (index + 1))))
-            else:
-                util.render(self.canvas, util.text(member, FONTS['Pixellari']),
-                            (DIMENSIONS['width'] / 2) - (member_width / 2), ((self.y + 4) + self.title_height))
+def image(image_file):
+    _image = pygame.image.load(image_file).convert_alpha()
+    return _image
 
 
-# Code obtained from https://www.pygame.org/wiki/Spritesheet
-class Spritesheet(object):
-    def __init__(self, filename):
-        try:
-            import util
-            self.sheet = util.load_image(filename)
-        except pygame.error as message:
-            print('Unable to load spritesheet image:', filename)
-            raise SystemExit(message)
-
-    def convert(self):
-        self.sheet = self.sheet.convert()
-
-    # Load a specific image from a specific rectangle
-    def image_at(self, rectangle):
-        "Loads image from x,y,x+offset,y+offset"
-        import util
-        rect = pygame.Rect(rectangle)
-        image = pygame.Surface(rect.size).convert()
-        util.render(image, self.sheet, 0, 0, rect)
-        # image.blit(self.sheet, (0, 0), rect)
-        return image
-
-    # Load a whole bunch of images and return them as a list
-    def images_at(self, rects, colorkey=None):
-        "Loads multiple images, supply a list of coordinates"
-        return [self.image_at(rect, colorkey) for rect in rects]
-
-    # Load a whole strip of images
-    def load_strip(self, rect, image_count, colorkey=None):
-        "Loads a strip of images and returns them as a list"
-        tups = [(rect[0] + rect[2] * x, rect[1], rect[2], rect[3])
-                for x in range(image_count)]
-        return self.images_at(tups, colorkey)
+def text(_text, font, size):
+    temp_font = pygame.font.Font(f"assets/fonts/{font}.ttf", size)
+    return temp_font.render(_text, False, (255, 255, 255))
 
 
-"""
-   ____ _   _ ___   _____ _                           _
-  / ___| | | |_ _| | ____| | ___ _ __ ___   ___ _ __ | |_ ___
- | |  _| | | || |  |  _| | |/ _ \ '_ ` _ \ / _ \ '_ \| __/ __|
- | |_| | |_| || |  | |___| |  __/ | | | | |  __/ | | | |_\__ \
-  \____|\___/|___| |_____|_|\___|_| |_| |_|\___|_| |_|\__|___/
+class Text:
+    def __init__(self, _text, font_name, size):
+        self.font = pygame.font.Font(f"assets/fonts/{font_name}.ttf", size)
+        self.colour = (255, 255, 255)
+        self.text = _text
 
-"""
+    def set_color(self, color):
+        self.colour = color
 
+    def get_size(self):
+        return self.font.size(self.text)
 
-class Button:
-    # Initializes and assigns parameters to Button instance
-    def __init__(self, x, y, width, height, text, destination):
-        self.font = None
-        self.color = (1, 1, 1)
-        self.position = {
-            'x': x,
-            'y': y,
-        }
-        self.size = {
-            'width': width,
-            'height': height
-        }
-        self.text = text
-        self.canvas = None
-        self.destination = destination
-
-    # Returns the area of the button
-    def get_area(self):
-        return {
-            'x': self.position['x'],
-            'y': self.position['y'],
-            'width': self.size['width'],
-            'height': self.size['height']
-        }
-
-    # Returns true or false depending if mouse is in the button area
-    def can_click(self):
-        mouse = pygame.mouse.get_pos()
-        return (self.get_area()['x'] < mouse[0] < self.get_area()['x'] + self.get_area()['width']) and (
-                self.get_area()['y'] < mouse[1] < self.get_area()['y'] + self.get_area()['height'])
-
-    def click(self, function):
-        if self.can_click():
-            function
-
-    # Draws the button with the button texture and button text
-    def draw(self):
-        from consts import TEXTURES, DIMENSIONS
-        from util import render, text
-        render(self.canvas, pygame.transform.scale(TEXTURES['button'], (self.size['width'], self.size['height'])),
-               int(self.position['x']), int(self.position['y']))
-
-        text_width, text_height = self.font.size(self.text)
-        render(self.canvas, text(self.text, self.font), (self.position['x'] + (self.size['width'] / 2)) - (text_width / 2),
-               (self.position['y'] + (self.size['height'] / 2)) - (text_height / 2) + 4)
+    def render(self):
+        return self.font.render(self.text, False, self.colour)
 
 
-class Checkbox:
+class GUIScreen(pygame.Surface):
 
-    # Initializes and assigns parameters to Button instance
-    def __init__(self, x, y, width, height, text, state):
-        from consts import FONTS
-        self.text = text
+    def __init__(self):
+        super(GUIScreen, self).__init__(pygame.display.get_surface().get_size())
+        self.components = []
 
-        self.position = {
-            'x': x,
-            'y': y,
-        }
-        self.size = {
-            'width': 32,
-            'height': height
-        }
-        self.canvas = None
-        self.state = state
+    def add_element(self, element, pos):
+        temp_el = (element, pos)
+        self.components.append(temp_el)
 
-    # Returns the area of the button
-    def get_area(self):
-        return {
-            'x': self.position['x'],
-            'y': self.position['y'],
-            'width': self.size['width'],
-            'height': self.size['height']
-        }
+    def render(self):
+        for element in self.components:
+            pygame.display.get_surface().blit(element[0], element[1])
 
-    # Returns true or false depending if mouse is in the button area
-    def can_click(self):
-        mouse = pygame.mouse.get_pos()
-        return (self.get_area()['x'] < mouse[0] < self.get_area()['x'] + self.get_area()['width']) and (
-                self.get_area()['y'] < mouse[1] < self.get_area()['y'] + self.get_area()['height'])
 
-    # Draws the button with the button texture and button text
-    def draw(self):
-        from consts import TEXTURES, FONTS
-        from util import render, text
+class SplashScreen(GUIScreen):
 
-        checkbox_on = TEXTURES['checkbox'].image_at((0, 0, 32, 32))
-        checkbox_off = TEXTURES['checkbox'].image_at((0, 32, 32, 64))
-        pygame.draw.rect(self.canvas, (255, 0, 0),
-                         (self.position['x'], self.position['y'], self.size['width'], self.size['height']))
+    def __init__(self):
+        super().__init__()
 
-        render(self.canvas, checkbox_on if self.state else checkbox_off, int(self.position['x']),
-               int(self.position['y']))
-        render(self.canvas, text(f"{self.text}", FONTS['Pixellari']), self.position['x'] + 40,
-               self.position['y'] + (self.size['height'] / 2 - (FONTS['Pixellari'].size(self.text)[1] / 2)) + 2)
+        window_width, window_height = pygame.display.get_surface().get_size()
+
+        usw_logo = image("assets/textures/gui/usw_logo.png")
+        usw_logo_width, usw_logo_height = usw_logo.get_size()
+        self.add_element(usw_logo, (window_width / 2 - usw_logo_width / 2, window_height / 2 - usw_logo_height))
+
+        caption_str = "A game created by students at the University of South Wales"
+        caption_text = Text(caption_str, "Pixellari", 26)
+        caption_width, caption_height = caption_text.get_size()
+        self.add_element(caption_text.render(), (window_width / 2 - caption_width / 2, window_height / 2 - caption_height / 2))
+
+
+class MainMenu(GUIScreen):
+
+    def __init__(self):
+        super().__init__()
+
+        self.add_element(text("Text", "Pixellari", 26), (16, 16))

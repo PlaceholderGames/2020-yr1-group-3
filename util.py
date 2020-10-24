@@ -1,102 +1,77 @@
 """
     Author:  Nathan Dow / Bitheral
-    Created: 14/10/2020
+    Created: 24/10/2020
 """
+import json
+import consts
+import datetime
 
-import pygame
-
-
-# Loads image files into Pygame
-def load_image(image_file):
-    image = pygame.image.load(image_file).convert_alpha()
-    return image
-
-
-# Loads audio files into Pygame
-def load_audio(audio_file):
-    return pygame.mixer.Sound(audio_file)
-
-
-# Loads font files into Pygame
-def load_font(font_file, font_size, system_font=False):
-    if system_font:
-        return pygame.font.SysFont(font_file, font_size)
-    else:
-        return pygame.font.Font(font_file, font_size)
+logo = [
+    "\n"
+    "  _______ _    _ ______   ____  ______ ______ _____   ____________ _____  _  ________ _____\n",
+    " |__   __| |  | |  ____| |  _ \|  ____|  ____|  __ \ |___  /  ____|  __ \| |/ /  ____|  __ \\\n",
+    "    | |  | |__| | |__    | |_) | |__  | |__  | |__) |   / /| |__  | |__) | ' /| |__  | |__) |\n",
+    "    | |  |  __  |  __|   |  _ <|  __| |  __| |  _  /   / / |  __| |  _  /|  < |  __| |  _  /\n",
+    "    | |  | |  | | |____  | |_) | |____| |____| | \ \  / /__| |____| | \ \| . \| |____| | \ \\\n",
+    "    |_|  |_|  |_|______| |____/|______|______|_|  \_\/_____|______|_|  \_\_|\_\______|_|  \_\\\n",
+    "\n\n",
+    "=========================================================================================================\n"
+]
 
 
-# Renders text with fonts
-def text(_text, font, color=(255, 255, 255)):
-    return font.render(_text, True, color)
+class Logger:
 
+    def __init__(self):
+        launch_time = datetime.datetime.now()
+        # Add file logging capability
+        self.file = open("log.txt", "w")
+        self.file.writelines(logo)
 
-# Allows stuff to be rendered such as images and text
-def render(canvas, _render, x, y, area=None):
-    canvas.blit(_render, (x, y), area)
+    def log(self, log, component, message):
+        currentTime = datetime.datetime.now()
+        date = {
+            "year": currentTime.year,
+            "month": currentTime.month,
+            "day": currentTime.day,
+            "hour": currentTime.hour,
+            "minute": currentTime.minute,
+            "second": currentTime.second
+        }
+        month = f"0{date['month']}" if date['month'] < 10 else str(date['month'])
+        day = f"0{date['day']}" if date['day'] < 10 else str(date['day'])
+        hour = f"0{date['hour']}" if date['hour'] < 10 else str(date['hour'])
+        minute = f"0{date['minute']}" if date['minute'] < 10 else str(date['minute'])
+        second = f"0{date['second']}" if date['second'] < 10 else str(date['second'])
 
+        line = f"[{day}/{month}/{date['year']} {hour}:{minute}:{second}][{log.upper()}][{component.upper()}]: {message}"
+        self.file.write(line + "\n")
+        print(line)
 
-# Creates a fade in effect
-def fade_in(screen, canvas, time, render):
-    for alpha in range(255, 0, -1):
-        canvas.set_alpha(alpha)
-        render()
-        screen.blit(canvas, (0, 0))
-        pygame.display.update()
-        pygame.time.delay(time)
+    def info(self, component, message):
+        self.log("info", component, message)
 
+    def warning(self, component, message):
+        self.log("warning", component, message)
 
-# Creates a fade out effect
-def fade_out(screen, canvas, time, render):
-    for alpha in range(0, 255):
-        canvas.fill((0, 0, 0))
-        canvas.set_alpha(alpha)
-        render()
-        screen.blit(canvas, (0, 0))
-        pygame.display.update()
-        pygame.time.delay(time)
+    def error(self, component, message):
+        self.log("error", component, message)
+
+    def stop(self):
+        self.info("VALHALLA", "Stopping...")
+        self.file.close()
 
 
 def create_settings_file():
-    import json
-    from consts import SETTINGS
+    with open("settings.json", "w") as file:
+        json.dump(consts.SETTINGS, file)
+    file.close()
 
-    with open("settings.json", 'w') as settingFile:
-        json.dump(SETTINGS, settingFile)
-    settingFile.close()
-
-
-def save_settings():
-    from consts import CHECKBOXES, SETTINGS
-    import json
-
-    SETTINGS['SHOW_FPS'] = CHECKBOXES['SETTINGS']['show_fps'].state
-    SETTINGS['FULLSCREEN'] = CHECKBOXES['SETTINGS']['fullscreen'].state
-
-    with open("settings.json", "w") as settingsFile:
-        json.dump(SETTINGS, settingsFile)
-    settingsFile.close()
-
-
-def load_settings():
-    import consts
-    import json
-    import os
-
-    if os.path.exists("settings.json"):
-        with open("settings.json", "r") as settingsFile:
-            data = json.load(settingsFile)
-            consts.CHECKBOXES['SETTINGS']['fullscreen'].state = data['FULLSCREEN']
-            consts.CHECKBOXES['SETTINGS']['show_fps'].state = data['SHOW_FPS']
-            consts.SETTINGS = data
-        settingsFile.close()
+    consts.LOGGER.info("Valhalla", "Saving settings to file")
 
 
 def load_settings_file():
-    import json
-    import os
-
-    if os.path.exists("settings.json"):
-        with open("settings.json", 'r') as settingsFile:
-            data = json.load(settingsFile)
-        settingsFile.close()
-        return data
+    with open("settings.json") as file:
+        consts.LOGGER.info("Valhalla", "Loading settings from file")
+        consts.SETTINGS = json.load(file)
+    file.close()
+    consts.LOGGER.info("Valhalla", "Finished loading setting from file")
