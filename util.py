@@ -5,6 +5,8 @@
 import json
 import consts
 import datetime
+import os
+import shutil
 
 logo = [
     "\n"
@@ -19,24 +21,39 @@ logo = [
 ]
 
 
+class Mouse:
+
+    def __init__(self):
+        self.pos = (0, 0)
+
+    def update(self, pos):
+        self.pos = pos
+
+    def get_pos(self):
+        return self.pos
+
+
 class Logger:
 
     def __init__(self):
-        launch_time = datetime.datetime.now()
-        # Add file logging capability
+        self.time = datetime.datetime.now()
         self.file = open("log.txt", "w")
         self.file.writelines(logo)
+        for line in logo:
+            print(line[:-1])
+        self.date = {}
 
     def log(self, log, component, message):
-        currentTime = datetime.datetime.now()
+        self.time = datetime.datetime.now()
         date = {
-            "year": currentTime.year,
-            "month": currentTime.month,
-            "day": currentTime.day,
-            "hour": currentTime.hour,
-            "minute": currentTime.minute,
-            "second": currentTime.second
+            "year": self.time.year,
+            "month": self.time.month,
+            "day": self.time.day,
+            "hour": self.time.hour,
+            "minute": self.time.minute,
+            "second": self.time.second
         }
+        self.date = date
         month = f"0{date['month']}" if date['month'] < 10 else str(date['month'])
         day = f"0{date['day']}" if date['day'] < 10 else str(date['day'])
         hour = f"0{date['hour']}" if date['hour'] < 10 else str(date['hour'])
@@ -46,6 +63,9 @@ class Logger:
         line = f"[{day}/{month}/{date['year']} {hour}:{minute}:{second}][{log.upper()}][{component.upper()}]: {message}"
         self.file.write(line + "\n")
         print(line)
+
+    def debug(self, component, message):
+        self.log("debug", component, message)
 
     def info(self, component, message):
         self.log("info", component, message)
@@ -58,7 +78,27 @@ class Logger:
 
     def stop(self):
         self.info("VALHALLA", "Stopping...")
+        month = f"0{self.date['month']}" if self.date['month'] < 10 else str(self.date['month'])
+        day = f"0{self.date['day']}" if self.date['day'] < 10 else str(self.date['day'])
+        hour = f"0{self.date['hour']}" if self.date['hour'] < 10 else str(self.date['hour'])
+        minute = f"0{self.date['minute']}" if self.date['minute'] < 10 else str(self.date['minute'])
+        second = f"0{self.date['second']}" if self.date['second'] < 10 else str(self.date['second'])
         self.file.close()
+        if not os.path.exists("logs"):
+            os.mkdir("logs")
+        shutil.move("log.txt", f"logs/")
+        os.rename("logs/log.txt",
+                  f"logs/{self.date['year']}-{month}-{day} {hour}-{minute}-{second}.txt")
+
+        # print()
+        # print(f"Saved to {os.getcwd()}\logs\{self.date['year']}-{self.month}-{self.day} {self.hour}-{self.minute}-{self.second}.txt")
+
+
+def quit_game():
+    consts.running = False
+    consts.LOGGER.info("Pygame", "Stopping...")
+    consts.LOGGER.stop()
+    quit()
 
 
 def create_settings_file():
@@ -70,8 +110,14 @@ def create_settings_file():
 
 
 def load_settings_file():
-    with open("settings.json") as file:
-        consts.LOGGER.info("Valhalla", "Loading settings from file")
-        consts.SETTINGS = json.load(file)
-    file.close()
-    consts.LOGGER.info("Valhalla", "Finished loading setting from file")
+    try:
+        with open("settings.json", "r") as file:
+            consts.LOGGER.info("Valhalla", "Loading settings from file")
+            consts.SETTINGS = json.load(file)
+        file.close()
+        consts.LOGGER.info("Valhalla", "Finished loading setting from file")
+    except FileNotFoundError:
+        consts.LOGGER.error("Valhalla", "The settings file could not be read because the file does not exist")
+        create_settings_file()
+    except IOError as e:
+        consts.LOGGER.error("Valhalla", f"An error occured: {e}")
