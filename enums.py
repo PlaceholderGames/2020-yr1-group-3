@@ -11,3 +11,4 @@ class Screens(Enum):
     SETTINGS = 1
     CREDITS = 2
     QUIT = 3
+    GAME = 4

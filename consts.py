@@ -6,9 +6,12 @@ from enums import Screens
 from util import Logger, Mouse
 
 running = True
+game = None
+
 current_screen = Screens.SPLASHSCREEN
 LOGGER = Logger()
 MOUSE = Mouse()
+
 
 SETTINGS = {
     "DEBUG_OVERLAY": False,
