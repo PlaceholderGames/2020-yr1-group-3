@@ -8,7 +8,7 @@ import os
 import util
 import datetime
 
-from gui import MainMenu, SplashScreen, DebugOverlay, GameOverlay, CreditScreen
+from gui import MainMenu, SplashScreen, DebugOverlay, GameOverlay, CreditScreen, PauseOverlay
 from enums import Screens
 
 
@@ -59,13 +59,29 @@ def main():
 
         elif consts.current_screen == Screens.GAME:
             game_overlay = GameOverlay()
+            game_pause = PauseOverlay()
 
             if consts.game.is_game_over():
+                if consts.game.get_enemies() == 0:
+                    consts.LOGGER.info("VALHALLA", "You won!")
+                else:
+                    consts.LOGGER.info("VALHALLA", "You lost!")
+
                 consts.current_screen = Screens.MAIN_MENU
                 consts.game = None
             else:
-                consts.game.update()
-                game_overlay.render()
+                consts.game.render()
+
+                if not consts.game.paused:
+                    pygame.mouse.set_visible(False)
+                    consts.game.update()
+                else:
+                    game_pause.handle_mouse_event()
+                    game_pause.render()
+                if consts.SETTINGS['DEBUG_OVERLAY']:
+                    debug_overlay.render()
+                else:
+                    game_overlay.render()
 
 
         elif consts.current_screen == Screens.QUIT:
@@ -79,12 +95,17 @@ def main():
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_F12:
-                        consts.LOGGER.debug("Valhalla", "Hiding debug overlay") if consts.SETTINGS[
-                            'DEBUG_OVERLAY'] else consts.LOGGER.debug("Valhalla", "Showing debug overlay")
+                        if consts.SETTINGS['DEBUG_OVERLAY']:
+                            consts.LOGGER.debug("Valhalla", "Hiding debug overlay")
+                        else:
+                            consts.LOGGER.debug("Valhalla", "Showing debug overlay")
                         consts.SETTINGS['DEBUG_OVERLAY'] = not consts.SETTINGS['DEBUG_OVERLAY']
 
-                if consts.game is not None:
-                    pass
+                    if consts.game is not None:
+                        if event.key == pygame.K_ESCAPE:
+                            consts.game.pause(not consts.game.paused)
+                            pygame.mouse.set_visible(consts.game.paused)
+                            pygame.mouse.set_pos(int(window.get_size()[0] / 2), int(window.get_size()[1] / 2))
 
                 if event.type == pygame.QUIT:
                     util.quit_game()

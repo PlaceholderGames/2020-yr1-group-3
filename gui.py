@@ -5,9 +5,11 @@
 import pygame
 import re
 import consts
+import util
+import os
+
 from enums import Screens
 from game import Game
-import util
 
 pygame.font.init()
 DEFAULT_FONT = pygame.font.Font("assets/fonts/Pixellari.ttf", 32)
@@ -56,8 +58,11 @@ class Spritesheet:
 
 
 class Text:
-    def __init__(self, _text, font_name, size, x, y):
-        self.font = pygame.font.Font(f"assets/fonts/{font_name}.ttf", size)
+    def __init__(self, _text, font_name, size, x=0, y=0, font_type=None):
+        if os.path.isdir(f"assets/fonts/{font_name}"):
+            self.font = pygame.font.Font(f"assets/fonts/{font_name}/{font_type}.ttf")
+        else:
+            self.font = pygame.font.Font(f"assets/fonts/{font_name}.ttf", size)
         self.colour = (255, 255, 255)
         self.text = _text
         self.pos = (x, y)
@@ -85,16 +90,21 @@ class Text:
 
 
 class Button:
-    def __init__(self, text_element, x, y):
+    def __init__(self, text_element, position, size):
         self.text = text_element
-        self.pos = (x, y)
-        self.size = (self.text.get_size()[0] * 2, self.text.get_size()[1] * 2)
+        self.pos = position
+        self.size = size
         self.area = (
-            self.pos[0] - self.text.get_size()[0] / 2,
-            self.pos[1] - self.text.get_size()[1] / 2,
+            self.pos[0],
+            self.pos[1],
             self.size[0],
             self.size[1]
         )
+
+        self.text.set_pos((
+            (self.pos[0] + self.size[0] / 2) - self.text.get_size()[0] / 2,
+            (self.pos[1] + self.size[1] / 2) - self.text.get_size()[1] / 2
+        ))
 
     def render(self):
         if self.on_hover():
@@ -147,6 +157,9 @@ class GUIScreen(pygame.Surface):
         for component in self.components:
             if isinstance(self.components[component], tuple):
                 pygame.display.get_surface().blit(self.components[component][0], self.components[component][1])
+            elif isinstance(self.components[component], Button):
+                text_element = self.components[component].text
+                pygame.display.get_surface().blit(self.components[component].render(), text_element.get_pos())
             else:
                 pygame.display.get_surface().blit(self.components[component].render(),
                                                   self.components[component].get_pos())
@@ -183,10 +196,14 @@ class DebugOverlay(GUIScreen):
         self.components["Mouse position"].set_text(f"Mouse position: {consts.MOUSE.get_pos()}")
         self.components["Current Screen"].set_text(f"Current screen: {Screens(consts.current_screen).name}")
         if consts.game is not None:
-            player_str = f"Player position: {(round(consts.game.get_player().x, 2), round(consts.game.get_player().y, 2))}"
+            player_str = f"Player position: {(round(consts.game.get_player().rect[0], 2), round(consts.game.get_player().rect[1], 2))}"
             player_text = Text(player_str, "Pixellari", 26, 16, 136)
 
+            attack_str = f"Player attacking? : {consts.game.get_player().attacking}"
+            attack_text = Text(attack_str, "Pixellari", 26, 16, 170)
+
             self.add_element("Player position", player_text)
+            self.add_element("Player attack", attack_text)
 
 
 class GameOverlay(GUIScreen):
@@ -204,6 +221,74 @@ class GameOverlay(GUIScreen):
     def render(self):
         super(GameOverlay, self).render()
         self.components["Health text"].set_text(f"Health: {int(consts.game.get_player().health)}")
+
+
+class PauseOverlay(GUIScreen):
+
+    def play_action(self):
+        consts.LOGGER.debug("VALHALLA", "Going back to game")
+        consts.game.paused = False
+
+    def settings_action(self):
+        consts.last_screen = Screens.GAME
+        consts.current_screen = Screens.SETTINGS
+
+    def credits_action(self):
+        consts.last_screen = Screens.GAME
+        consts.current_screen = Screens.CREDITS
+
+    def quit_action(self):
+        consts.current_screen = Screens.MAIN_MENU
+
+    def __init__(self):
+        super().__init__()
+
+        play_offset = (-164, -64)
+        settings_offset = (-160 - 4, 8)
+        credits_offset = (4, 8)
+        quit_offset = (-164, 80)
+
+        window_width, window_height = pygame.display.get_surface().get_size()
+
+        paused_text = Text("Paused", "Pixellari", 48, (window_width / 2) - 75, (window_width / 8))
+
+        play_text = Text("Back to game", "Pixellari", 26)
+        play_button = Button(
+            play_text,
+            (window_width / 2 + play_offset[0], window_height / 2 + play_offset[1]),
+            (328, 64)
+        )
+        play_button.set_action(self.play_action)
+
+        settings_text = Text("Settings", "Pixellari", 26)
+        settings_button = Button(
+            settings_text,
+            (window_width / 2 + settings_offset[0], window_height / 2 + settings_offset[1]),
+            (160, 64)
+        )
+        settings_button.set_action(self.settings_action)
+
+        credits_text = Text("Credits", "Pixellari", 26)
+        credits_button = Button(
+            credits_text,
+            (window_width / 2 + credits_offset[0], window_height / 2 + credits_offset[1]),
+            (160, 64)
+        )
+        credits_button.set_action(self.credits_action)
+
+        quit_text = Text("Quit", "Pixellari", 26)
+        quit_button = Button(
+            quit_text,
+            (window_width / 2 + quit_offset[0], window_height / 2 + quit_offset[1]),
+            (328, 64)
+        )
+        quit_button.set_action(self.quit_action)
+
+        self.add_element("Paused text", paused_text)
+        self.add_element("Play", play_button)
+        self.add_element("Settings", settings_button)
+        self.add_element("Credits", credits_button)
+        self.add_element("Quit", quit_button)
 
 
 class SplashScreen(GUIScreen):
@@ -227,6 +312,11 @@ class SplashScreen(GUIScreen):
 
 class MainMenu(GUIScreen):
 
+    def continue_action(self):
+        consts.LOGGER.debug("VALHALLA", "Continue button pressed")
+        consts.current_screen = Screens.GAME
+        consts.LOGGER.info("VALHALLA", "Initializing new game")
+
     def play_action(self):
         consts.LOGGER.debug("VALHALLA", "Play button pressed")
         consts.current_screen = Screens.GAME
@@ -235,9 +325,12 @@ class MainMenu(GUIScreen):
 
     def settings_action(self):
         consts.LOGGER.debug("VALHALLA", "Settings button pressed")
+        consts.last_screen = Screens.MAIN_MENU
+        consts.current_screen = Screens.SETTINGS
 
     def credits_action(self):
         consts.LOGGER.debug("VALHALLA", "Credits button pressed")
+        consts.last_screen = Screens.MAIN_MENU
         consts.current_screen = Screens.CREDITS
 
     def quit_action(self):
@@ -248,62 +341,144 @@ class MainMenu(GUIScreen):
         super().__init__()
 
         window_width, window_height = pygame.display.get_surface().get_size()
-        play_offset = (0, -64)
-        settings_offset = (-16, 0)
-        credits_offset = (-14, 64)
-        quit_offset = (0, 128)
 
-        logo_temp_text = Text("THE BEERZERKER", "Pixellari", 48, (window_width / 2) - 160,
-                         (window_width / 8))
+        self.continue_offset = (-164, -128)
+        self.play_offset = (-164, -64)
+        self.settings_offset = (-160 - 4, 8)
+        self.credits_offset = (4, 8)
+        self.quit_offset = (-164, 80)
+        version_offset = (-166, -32)
 
-        play_text = Text("Play", "Pixellari", 26, (window_width / 2) + play_offset[0],
-                         (window_height / 2) + play_offset[1])
-        play_button = Button(play_text, (window_width / 2) + play_offset[0], (window_height / 2) + play_offset[1])
-        play_button.set_action(self.play_action)
+        logo_temp_text = Text("THE BEERZERKER", "Pixellari", 48, (window_width / 2) - 196,
+                              (window_height / 6))
 
-        settings_text = Text("Settings", "Pixellari", 26, (window_width / 2) + settings_offset[0],
-                             (window_height / 2) + settings_offset[1])
-        settings_button = Button(settings_text, (window_width / 2) + settings_offset[0],
-                                 (window_height / 2) + settings_offset[1])
-        settings_button.set_action(self.settings_action)
+        continue_text = Text("Continue", "Pixellari", 26)
+        self.continue_button = Button(
+            continue_text,
+            (window_width / 2 + self.continue_offset[0], window_height / 2 + self.continue_offset[1]),
+            (328, 64)
+        )
+        self.continue_button.set_action(self.continue_action)
 
-        credits_text = Text("Credits", "Pixellari", 26, (window_width / 2) + credits_offset[0],
-                            (window_height / 2) + credits_offset[1])
-        credits_button = Button(credits_text, (window_width / 2) + credits_offset[0],
-                                (window_height / 2) + credits_offset[1])
-        credits_button.set_action(self.credits_action)
+        play_text = Text("Play", "Pixellari", 26)
+        self.play_button = Button(
+            play_text,
+            (window_width / 2 + self.play_offset[0], window_height / 2 + self.play_offset[1]),
+            (328, 64)
+        )
+        self.play_button.set_action(self.play_action)
 
-        quit_text = Text("Quit", "Pixellari", 26, (window_width / 2) + quit_offset[0],
-                         (window_height / 2) + quit_offset[1])
-        quit_button = Button(quit_text, (window_width / 2) + quit_offset[0], (window_height / 2) + quit_offset[1])
-        quit_button.set_action(self.quit_action)
+        settings_text = Text("Settings", "Pixellari", 26)
+        self.settings_button = Button(
+            settings_text,
+            (window_width / 2 + self.settings_offset[0], window_height / 2 + self.settings_offset[1]),
+            (160, 64)
+        )
+        self.settings_button.set_action(self.settings_action)
+
+        credits_text = Text("Credits", "Pixellari", 26)
+        self.credits_button = Button(
+            credits_text,
+            (window_width / 2 + self.credits_offset[0], window_height / 2 + self.credits_offset[1]),
+            (160, 64)
+        )
+        self.credits_button.set_action(self.credits_action)
+
+        quit_text = Text("Quit", "Pixellari", 26)
+        self.quit_button = Button(
+            quit_text,
+            (window_width / 2 + self.quit_offset[0], window_height / 2 + self.quit_offset[1]),
+            (328, 64)
+        )
+        self.quit_button.set_action(self.quit_action)
+
+        version_text = Text(consts.version, "Pixellari", 26, window_width + version_offset[0],
+                            window_height + version_offset[1])
 
         self.add_element("Logo", logo_temp_text)
-        self.add_element("Play", play_button)
-        self.add_element("Settings", settings_button)
-        self.add_element("Credits", credits_button)
-        self.add_element("Quit", quit_button)
+        self.add_element("Play", self.play_button)
+        self.add_element("Settings", self.settings_button)
+        self.add_element("Credits", self.credits_button)
+        self.add_element("Quit", self.quit_button)
+
+        self.add_element("Version", version_text)
+
+    def render(self):
+        super(MainMenu, self).render()
+
+        window_width, window_height = pygame.display.get_surface().get_size()
+        if consts.game is None:
+            self.play_offset = (-164, -64)
+            self.settings_offset = (-160 - 4, 8)
+            self.credits_offset = (4, 8)
+            self.quit_offset = (-164, 80)
+        else:
+            self.add_element("Continue", self.continue_button)
+            self.continue_offset = (-164, -64)
+            self.play_offset = (-164, 8)
+            self.settings_offset = (-164, 80)
+            self.credits_offset = (4, 80)
+            self.quit_offset = (-164, 152)
+
+        continue_text = Text("Continue", "Pixellari", 26)
+        self.continue_button = Button(
+            continue_text,
+            (window_width / 2 + self.continue_offset[0], window_height / 2 + self.continue_offset[1]),
+            (328, 64)
+        )
+        self.continue_button.set_action(self.continue_action)
+
+        play_text = Text("Play" if consts.game is None else "New game", "Pixellari", 26)
+        self.play_button = Button(play_text,
+                                  (window_width / 2 + self.play_offset[0], window_height / 2 + self.play_offset[1]),
+                                  (328, 64))
+        self.play_button.set_action(self.play_action)
+
+        settings_text = Text("Settings", "Pixellari", 26)
+        self.settings_button = Button(settings_text, (
+        window_width / 2 + self.settings_offset[0], window_height / 2 + self.settings_offset[1]), (160, 64))
+        self.settings_button.set_action(self.settings_action)
+
+        credits_text = Text("Credits", "Pixellari", 26)
+        self.credits_button = Button(credits_text, (
+        window_width / 2 + self.credits_offset[0], window_height / 2 + self.credits_offset[1]), (160, 64))
+        self.credits_button.set_action(self.credits_action)
+
+        quit_text = Text("Quit", "Pixellari", 26)
+        self.quit_button = Button(quit_text,
+                                  (window_width / 2 + self.quit_offset[0], window_height / 2 + self.quit_offset[1]),
+                                  (328, 64))
+        self.quit_button.set_action(self.quit_action)
+
+        self.add_element("Play", self.play_button)
+        self.add_element("Settings", self.settings_button)
+        self.add_element("Credits", self.credits_button)
+        self.add_element("Quit", self.quit_button)
 
 
 class CreditScreen(GUIScreen):
 
     def back_action(self):
         consts.LOGGER.debug("VALHALLA", "Back button pressed")
-        consts.current_screen = Screens.MAIN_MENU
+        consts.current_screen = consts.last_screen
 
     def __init__(self):
         super().__init__()
 
         window_width, window_height = pygame.display.get_surface().get_size()
-        title_offset = (-14, 0)
+        title_offset = (-42, 0)
 
-        lead_programmer_title_offset = (-70, 0)
-        lead_programmer_credit_offset = (-40, 32)
+        lead_programmer_title_offset = (-105, 0)
+        lead_programmer_credit_offset = (-69, 32)
 
-        programmer_title_offset = (-48, 16)
-        programmer_credit_offset = (-104, 48)
+        programmer_title_offset = (-80, 16)
+        programmer_credit_offset = (-129, 48)
 
-        back_offset = (0, 192)
+        artist_title_offset = (-39, -96)
+        artist_credit_1_offset = (-129, -64)
+        artist_credit_2_offset = (-87, -32)
+
+        back_offset = (-64, 192)
 
         screen_title = Text("Credits", "Pixellari", 26, (window_width / 2) + title_offset[0],
                             (window_width / 12) + title_offset[1])
@@ -316,15 +491,29 @@ class CreditScreen(GUIScreen):
                                       (window_width / 6) + lead_programmer_credit_offset[1])
 
         programmer_title = Text("Programmers", "Pixellari", 26,
-                                     (window_width / 2) + programmer_title_offset[0],
-                                     (window_width / 4) + programmer_title_offset[1])
+                                (window_width / 2) + programmer_title_offset[0],
+                                (window_width / 4) + programmer_title_offset[1])
         programmer_credit = Text("Bartosz Swieszkowski", "Pixellari", 26,
-                                      (window_width / 2) + programmer_credit_offset[0],
-                                      (window_width / 4) + programmer_credit_offset[1])
+                                 (window_width / 2) + programmer_credit_offset[0],
+                                 (window_width / 4) + programmer_credit_offset[1])
+
+        artist_title = Text("Artists", "Pixellari", 26,
+                            (window_width / 2) + artist_title_offset[0],
+                            (window_width / 2) + artist_title_offset[1])
+        artist_credit_1 = Text("Bartosz Swieszkowski", "Pixellari", 26,
+                               (window_width / 2) + artist_credit_1_offset[0],
+                               (window_width / 2) + artist_credit_1_offset[1])
+        artist_credit_2 = Text("Conner Hughes", "Pixellari", 26,
+                               (window_width / 2) + artist_credit_2_offset[0],
+                               (window_width / 2) + artist_credit_2_offset[1])
 
         back_text = Text("Back", "Pixellari", 26, (window_width / 2) + back_offset[0],
                          (window_height / 2) + back_offset[1])
-        back_button = Button(back_text, (window_width / 2) + back_offset[0], (window_height / 2) + back_offset[1])
+        back_button = Button(
+            back_text,
+            (window_width / 2 + back_offset[0], window_height / 2 + back_offset[1]),
+            (128, 64)
+        )
         back_button.set_action(self.back_action)
 
         self.add_element("Credit title", screen_title)
@@ -334,5 +523,9 @@ class CreditScreen(GUIScreen):
 
         self.add_element("Programmer title", programmer_title)
         self.add_element("Programmer credit", programmer_credit)
+
+        self.add_element("Artist title", artist_title)
+        self.add_element("Artist credit 1", artist_credit_1)
+        self.add_element("Artist credit 2", artist_credit_2)
 
         self.add_element("Back button", back_button)

@@ -7,8 +7,10 @@ from util import Logger, Mouse
 
 running = True
 game = None
+version = "1.0.0"
 
 current_screen = Screens.SPLASHSCREEN
+last_screen = Screens.SPLASHSCREEN
 LOGGER = Logger()
 MOUSE = Mouse()
 

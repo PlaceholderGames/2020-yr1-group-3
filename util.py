@@ -7,6 +7,7 @@ import consts
 import datetime
 import os
 import shutil
+import math
 
 logo = [
     "\n"
@@ -99,6 +100,21 @@ def quit_game():
     consts.LOGGER.info("Pygame", "Stopping...")
     consts.LOGGER.stop()
     quit()
+
+
+def constrain(value, low, high):
+    return max(min(value, high), low)
+
+
+def bind(value, currentStart, currentStop, targetStart, targetStop, withinBounds):
+    new_value = (value - currentStart) / (currentStop - currentStart) * (targetStop - targetStart) + targetStart
+    if not withinBounds:
+        return new_value
+
+    if targetStart < targetStop:
+        return constrain(new_value, targetStart, targetStop)
+    else:
+        return constrain(new_value, targetStop, targetStart)
 
 
 def create_settings_file():

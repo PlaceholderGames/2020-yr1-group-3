@@ -12,3 +12,10 @@ class Screens(Enum):
     CREDITS = 2
     QUIT = 3
     GAME = 4
+
+
+class Direction(Enum):
+    RIGHT = 1
+    LEFT = -1
+    UP = 2
+    DOWN = 3
