@@ -7,7 +7,7 @@ import consts
 import datetime
 import os
 import shutil
-import math
+import ctypes
 
 logo = [
     "\n"
@@ -119,6 +119,14 @@ def bind(value, currentStart, currentStop, targetStart, targetStop, withinBounds
 
 def create_settings_file():
     with open("settings.json", "w") as file:
+        json.dump(consts.SETTINGS_TEMPLATE, file)
+    file.close()
+
+    consts.LOGGER.info("Valhalla", "Saving settings to file")
+
+
+def save_to_settings_file():
+    with open("settings.json", "w") as file:
         json.dump(consts.SETTINGS, file)
     file.close()
 
@@ -136,4 +144,14 @@ def load_settings_file():
         consts.LOGGER.error("Valhalla", "The settings file could not be read because the file does not exist")
         create_settings_file()
     except IOError as e:
-        consts.LOGGER.error("Valhalla", f"An error occured: {e}")
+        consts.LOGGER.error("Valhalla", f"An error occurred: {e}")
+    finally:
+        for template_key in consts.SETTINGS_TEMPLATE:
+            if template_key not in consts.SETTINGS:
+                consts.SETTINGS[template_key] = consts.SETTINGS_TEMPLATE[template_key]
+                save_to_settings_file()
+
+        if consts.SETTINGS['RESOLUTION']['WIDTH'] > ctypes.windll.user32.GetSystemMetrics(0):
+            consts.SETTINGS['RESOLUTION']['WIDTH'] = ctypes.windll.user32.GetSystemMetrics(0)
+        if consts.SETTINGS['RESOLUTION']['HEIGHT'] > ctypes.windll.user32.GetSystemMetrics(1):
+            consts.SETTINGS['RESOLUTION']['HEIGHT'] = ctypes.windll.user32.GetSystemMetrics(1)

@@ -81,40 +81,34 @@ class Player(object):
         self.attacking = 0
         self.rect = pygame.rect.Rect((self.screen.get_size()[0] / 2, self.screen.get_size()[1] / 2, 32, 32))
         self.atkr = pygame.rect.Rect((self.screen.get_size()[0] / 2, self.screen.get_size()[1] / 2, 16, 32))
-        self.direction = Direction.RIGHT
+        self.facing_direction = Direction.RIGHT
+        self.attack_direction = Direction.RIGHT
         self.speed = 1.4
 
     def handle_keys(self):
         key = pygame.key.get_pressed()
         if key[pygame.K_LEFT] or key[pygame.K_a]:
-            self.direction = Direction.LEFT
+            self.facing_direction = Direction.LEFT
             self.rect.move_ip(-self.speed, 0)
             self.atkr.move_ip(-self.speed, 0)
         if key[pygame.K_RIGHT] or key[pygame.K_d]:
-            self.direction = Direction.RIGHT
+            self.facing_direction = Direction.RIGHT
             self.rect.move_ip(self.speed, 0)
             self.atkr.move_ip(self.speed, 0)
         if key[pygame.K_UP] or key[pygame.K_w]:
-            self.direction = Direction.UP
+            self.facing_direction = Direction.UP
             self.rect.move_ip(0, -self.speed)
             self.atkr.move_ip(0, -self.speed)
         if key[pygame.K_DOWN] or key[pygame.K_s]:
-            self.direction = Direction.DOWN
+            self.facing_direction = Direction.DOWN
             self.rect.move_ip(0, self.speed)
             self.atkr.move_ip(0, self.speed)
 
     def handle_mouse(self):
-        mouse = pygame.mouse.get_pressed()
-        left = 0
-        middle = 1
-        right = 2
+        mouse = pygame.mouse.get_pos()
 
         if pygame.event.get(pygame.MOUSEBUTTONDOWN):
             self.attacking = 50
-        # if mouse[left] == 1:
-        #    self.attacking = True
-        # else:
-        #    self.attacking = False
 
     def draw(self):
         if self.attacking != 0:
@@ -127,13 +121,14 @@ class Player(object):
         elif self.attacking < 0:
             self.attacking = 0
 
-        if self.direction == Direction.RIGHT:
+        # Cardinal points
+        if self.facing_direction == Direction.RIGHT:
             self.atkr = pygame.rect.Rect((self.rect.x + 32, self.rect.y, 32, 32))
-        elif self.direction == Direction.LEFT:
+        elif self.facing_direction == Direction.LEFT:
             self.atkr = pygame.rect.Rect((self.rect.x, self.rect.y, -32, 32))
-        elif self.direction == Direction.UP:
+        elif self.facing_direction == Direction.UP:
             self.atkr = pygame.rect.Rect((self.rect.x, self.rect.y, 32, -32))
-        elif self.direction == Direction.DOWN:
+        elif self.facing_direction == Direction.DOWN:
             self.atkr = pygame.rect.Rect((self.rect.x, self.rect.y + 32, 32, 32))
 
         if pygame.time.get_ticks() % 2000:
@@ -197,7 +192,6 @@ class Game:
         self.pedestrians = []
         self.game_over = False
         self.paused = False
-        pygame.mouse.set_visible(False)
 
         for enemy in range(1):
             self.enemies.append(Enemy())
@@ -227,11 +221,9 @@ class Game:
             enemy.draw()
 
     def update(self):
-        pygame.mouse.set_pos(0, 0)
         if self.player.health <= 0 or len(self.enemies) == 0:
             self.game_over = True
             LOGGER.info("VALHALLA", "Game over! Going back to MAIN_MENU")
-            pygame.mouse.set_visible(True)
 
         self.player.update()
         self.player.handle_keys()

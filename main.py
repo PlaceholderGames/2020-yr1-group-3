@@ -7,20 +7,16 @@ import consts
 import os
 import util
 import datetime
+import ctypes
 
-from gui import MainMenu, SplashScreen, DebugOverlay, GameOverlay, CreditScreen, PauseOverlay
+from gui import MainMenu, SplashScreen, DebugOverlay, GameOverlay, CreditScreen, PauseOverlay, SettingScreen
 from enums import Screens
-
 
 def main():
     clock = pygame.time.Clock()
     pygame.init()
     pygame.font.init()
     consts.LOGGER.info("Pygame", "Pygame and its components have been initialized")
-
-    window = pygame.display.set_mode((800, 600))
-    pygame.display.set_caption("The BeerZerker")
-    consts.LOGGER.info("Pygame", "Created window")
 
     if os.path.exists("settings.json"):
         consts.LOGGER.info("Valhalla", "Settings file already exists; ")
@@ -29,11 +25,20 @@ def main():
         consts.LOGGER.warning("Valhalla", "Settings file could not be found; Creating new settings file...")
         util.create_settings_file()
 
+    if consts.SETTINGS['FULLSCREEN']:
+        window = pygame.display.set_mode((ctypes.windll.user32.GetSystemMetrics(0), ctypes.windll.user32.GetSystemMetrics(1)), pygame.FULLSCREEN)
+    else:
+        window = pygame.display.set_mode(
+            (consts.SETTINGS['RESOLUTION']['WIDTH'], consts.SETTINGS['RESOLUTION']['HEIGHT']))
+    pygame.display.set_caption("The BeerZerker")
+    consts.LOGGER.info("Pygame", "Created window")
+
     displayCount = 0
 
     start_time = pygame.time.get_ticks()
     splash_screen = SplashScreen()
     main_menu = MainMenu()
+    settings_screen = SettingScreen()
     credit_screen = CreditScreen()
     debug_overlay = DebugOverlay()
 
@@ -48,15 +53,15 @@ def main():
                 splash_screen.render()
             else:
                 consts.current_screen = Screens.MAIN_MENU
-
         elif consts.current_screen == Screens.MAIN_MENU:
             main_menu.render()
             main_menu.handle_mouse_event()
-
+        elif consts.current_screen == Screens.SETTINGS:
+            settings_screen.render()
+            settings_screen.handle_mouse_event()
         elif consts.current_screen == Screens.CREDITS:
             credit_screen.render()
             credit_screen.handle_mouse_event()
-
         elif consts.current_screen == Screens.GAME:
             game_overlay = GameOverlay()
             game_pause = PauseOverlay()
@@ -73,7 +78,6 @@ def main():
                 consts.game.render()
 
                 if not consts.game.paused:
-                    pygame.mouse.set_visible(False)
                     consts.game.update()
                 else:
                     game_pause.handle_mouse_event()
@@ -82,8 +86,6 @@ def main():
                     debug_overlay.render()
                 else:
                     game_overlay.render()
-
-
         elif consts.current_screen == Screens.QUIT:
             consts.LOGGER.info("VALHALLA", "QUIT Screen recognised. Quitting game...")
             util.quit_game()
@@ -104,8 +106,8 @@ def main():
                     if consts.game is not None:
                         if event.key == pygame.K_ESCAPE:
                             consts.game.pause(not consts.game.paused)
-                            pygame.mouse.set_visible(consts.game.paused)
-                            pygame.mouse.set_pos(int(window.get_size()[0] / 2), int(window.get_size()[1] / 2))
+                            #pygame.mouse.set_visible(consts.game.paused)
+                            #pygame.mouse.set_pos(int(window.get_size()[0] / 2), int(window.get_size()[1] / 2))
 
                 if event.type == pygame.QUIT:
                     util.quit_game()

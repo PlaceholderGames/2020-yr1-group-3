@@ -14,10 +14,14 @@ last_screen = Screens.SPLASHSCREEN
 LOGGER = Logger()
 MOUSE = Mouse()
 
-
-SETTINGS = {
+SETTINGS_TEMPLATE = {
     "DEBUG_OVERLAY": False,
-    "SHOW_FPS": False,
     "FULLSCREEN": False,
-    "FPS_LIMIT": 60
+    "RESOLUTION": {
+        "WIDTH":  800,
+        "HEIGHT":  600
+    }
 }
+
+
+SETTINGS = {}

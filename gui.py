@@ -28,7 +28,7 @@ def text(_text, font, size):
 class Spritesheet:
     def __init__(self, filename):
         try:
-            self.sheet = pygame.image.load(filename).convert()
+            self.sheet = pygame.image.load(filename).convert_alpha()
         except pygame.error as message:
             consts.LOGGER("Valhalla", f"Unable to load image as a spritesheet: {filename}")
 
@@ -55,6 +55,54 @@ class Spritesheet:
         tups = [(rect[0] + rect[2] * x, rect[1], rect[2], rect[3])
                 for x in range(image_count)]
         return self.images_at(tups, colorkey)
+
+
+class Checkbox:
+    def __init__(self, text_element, position):
+        self.text = text_element
+        self.pos = position
+        self.state = False
+        self.area = (
+            self.pos[0],
+            self.pos[1],
+            32,
+            32
+        )
+
+        self.text.set_pos((
+            (self.pos[0] + 40),
+            (self.pos[1] + 18) - self.text.get_size()[1] / 2
+        ))
+
+        self.sprite = Spritesheet("assets/textures/gui/checkbox.png")
+
+    def render(self):
+        on = self.sprite.image_at((0, 0, 32, 32))
+        off = self.sprite.image_at((0, 32, 32, 64))
+        if self.state:
+            return on, self.text.render()
+            #pygame.draw.rect(pygame.display.get_surface(), (0, 255, 0),  on.get_rect())
+        else:
+            return off, self.text.render()
+            #pygame.draw.rect(pygame.display.get_surface(), (0, 0, 255), off.get_rect())
+
+        #return self.text.render()
+
+    def get_pos(self):
+        return self.pos
+
+    def set_state(self, state):
+        self.state = state
+
+    def set_pos(self, pos):
+        self.pos = pos
+
+    def toggle(self):
+        self.state = not self.state
+
+    def on_hover(self):
+        return self.area[0] < consts.MOUSE.get_pos()[0] < self.area[0] + self.area[2] and self.area[1] < \
+               consts.MOUSE.get_pos()[1] < self.area[1] + self.area[3]
 
 
 class Text:
@@ -152,6 +200,10 @@ class GUIScreen(pygame.Surface):
                     button = self.components[component]
                     if button.on_hover():
                         button.action()
+                elif isinstance(self.components[component], Checkbox):
+                    checkbox = self.components[component]
+                    if checkbox.on_hover():
+                        checkbox.toggle()
 
     def render(self):
         for component in self.components:
@@ -160,6 +212,14 @@ class GUIScreen(pygame.Surface):
             elif isinstance(self.components[component], Button):
                 text_element = self.components[component].text
                 pygame.display.get_surface().blit(self.components[component].render(), text_element.get_pos())
+            elif isinstance(self.components[component], Checkbox):
+                text_element = self.components[component].text
+
+                # Checkbox image
+                pygame.display.get_surface().blit(self.components[component].render()[0], self.components[component].get_pos())
+
+                # Text
+                pygame.display.get_surface().blit(self.components[component].render()[1], text_element.get_pos())
             else:
                 pygame.display.get_surface().blit(self.components[component].render(),
                                                   self.components[component].get_pos())
@@ -276,7 +336,7 @@ class PauseOverlay(GUIScreen):
         )
         credits_button.set_action(self.credits_action)
 
-        quit_text = Text("Quit", "Pixellari", 26)
+        quit_text = Text("Quit to main menu", "Pixellari", 26)
         quit_button = Button(
             quit_text,
             (window_width / 2 + quit_offset[0], window_height / 2 + quit_offset[1]),
@@ -342,12 +402,19 @@ class MainMenu(GUIScreen):
 
         window_width, window_height = pygame.display.get_surface().get_size()
 
+        # Buttons offset
         self.continue_offset = (-164, -128)
         self.play_offset = (-164, -64)
         self.settings_offset = (-160 - 4, 8)
         self.credits_offset = (4, 8)
         self.quit_offset = (-164, 80)
+
+        # Text offset
         version_offset = (-166, -32)
+
+        controls_title_offset = (6, -86)
+        move_offset = (8, -56)
+        attack_offset = (8, -32)
 
         logo_temp_text = Text("THE BEERZERKER", "Pixellari", 48, (window_width / 2) - 196,
                               (window_height / 6))
@@ -392,8 +459,17 @@ class MainMenu(GUIScreen):
         )
         self.quit_button.set_action(self.quit_action)
 
-        version_text = Text(consts.version, "Pixellari", 26, window_width + version_offset[0],
+        version_text = Text(f"Version {consts.version}", "Pixellari", 26, window_width + version_offset[0],
                             window_height + version_offset[1])
+
+        controls_title_text = Text("Controls:", "Pixellari", 26, controls_title_offset[0],
+                                   window_height + controls_title_offset[1])
+
+        move_text = Text("WASD or arrow keys to move", "Pixellari", 26, move_offset[0],
+                         window_height + move_offset[1])
+
+        attack_text = Text("Left click to attack", "Pixellari", 26, attack_offset[0],
+                           window_height + attack_offset[1])
 
         self.add_element("Logo", logo_temp_text)
         self.add_element("Play", self.play_button)
@@ -402,6 +478,9 @@ class MainMenu(GUIScreen):
         self.add_element("Quit", self.quit_button)
 
         self.add_element("Version", version_text)
+        self.add_element("Controls text", controls_title_text)
+        self.add_element("Move controls text", move_text)
+        self.add_element("Attack controls text", attack_text)
 
     def render(self):
         super(MainMenu, self).render()
@@ -436,12 +515,12 @@ class MainMenu(GUIScreen):
 
         settings_text = Text("Settings", "Pixellari", 26)
         self.settings_button = Button(settings_text, (
-        window_width / 2 + self.settings_offset[0], window_height / 2 + self.settings_offset[1]), (160, 64))
+            window_width / 2 + self.settings_offset[0], window_height / 2 + self.settings_offset[1]), (160, 64))
         self.settings_button.set_action(self.settings_action)
 
         credits_text = Text("Credits", "Pixellari", 26)
         self.credits_button = Button(credits_text, (
-        window_width / 2 + self.credits_offset[0], window_height / 2 + self.credits_offset[1]), (160, 64))
+            window_width / 2 + self.credits_offset[0], window_height / 2 + self.credits_offset[1]), (160, 64))
         self.credits_button.set_action(self.credits_action)
 
         quit_text = Text("Quit", "Pixellari", 26)
@@ -454,6 +533,60 @@ class MainMenu(GUIScreen):
         self.add_element("Settings", self.settings_button)
         self.add_element("Credits", self.credits_button)
         self.add_element("Quit", self.quit_button)
+
+
+class SettingScreen(GUIScreen):
+
+    def back_action(self):
+        consts.LOGGER.debug("VALHALLA", "Back button pressed")
+        consts.current_screen = consts.last_screen
+
+    def __init__(self):
+        super().__init__()
+
+        window_width, window_height = pygame.display.get_surface().get_size()
+        title_offset = (-42, 0)
+
+        note_text_offset = (-360, 0)
+        note_2_text_offset =(-360, 34)
+
+        back_offset = (-64, 192)
+
+        screen_title = Text("Settings", "Pixellari", 26, (window_width / 2) + title_offset[0],
+                            (window_width / 12) + title_offset[1])
+
+        note_text = Text("Changing game settings, in-game, is currently not implemented.", "Pixellari", 26,
+                         (window_width / 2) + note_text_offset[0],
+                         (window_width / 6) + note_text_offset[1])
+
+        note_2_text = Text("Current game settings can be modified in the \"settings.json\" file.", "Pixellari", 26,
+                         (window_width / 2) + note_2_text_offset[0],
+                         (window_width / 6) + note_2_text_offset[1])
+
+        #
+        #checkbox_test_text = Text("Checkbox TEST", "Pixellari", 26, (window_width / 2) + back_offset[0],
+        #                 (window_height / 2) + back_offset[1])
+        #checkbox_test = Checkbox(
+        #    checkbox_test_text,
+        #    (window_width / 8 + back_offset[0], window_height / 8 + back_offset[1] + 64),
+        #)
+
+        back_text = Text("Back", "Pixellari", 26, (window_width / 2) + back_offset[0],
+                         (window_height / 2) + back_offset[1])
+        back_button = Button(
+            back_text,
+            (window_width / 2 + back_offset[0], window_height / 2 + back_offset[1]),
+            (128, 64)
+        )
+        back_button.set_action(self.back_action)
+
+        self.add_element("Credit title", screen_title)
+
+        self.add_element("Note Text", note_text)
+        self.add_element("Note 2 Text", note_2_text)
+
+        self.add_element("Back button", back_button)
+        # self.add_element("Checkbox test", checkbox_test)
 
 
 class CreditScreen(GUIScreen):
