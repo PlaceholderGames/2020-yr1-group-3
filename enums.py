@@ -5,6 +5,8 @@ Created: 24/10/2020
 from enum import Enum
 
 
+# Screens list
+# All possible screens to exist
 class Screens(Enum):
     SPLASHSCREEN = -1
     MAIN_MENU = 0
@@ -14,6 +16,9 @@ class Screens(Enum):
     GAME = 4
 
 
+# Direction list
+# All possible directions to exit
+# Needed for player attack
 class Direction(Enum):
     UP = 1
     DOWN = 2

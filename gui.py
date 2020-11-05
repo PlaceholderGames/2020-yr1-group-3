@@ -12,19 +12,20 @@ from enums import Screens
 from game import Game
 
 pygame.font.init()
-DEFAULT_FONT = pygame.font.Font("assets/fonts/Pixellari.ttf", 32)
 
 
+# Initialize an image
+# Probably replaced with a class soon
 def image(image_file):
     _image = pygame.image.load(image_file).convert_alpha()
     return _image
 
 
-def text(_text, font, size):
-    temp_font = pygame.font.Font(f"assets/fonts/{font}.ttf", size)
-    return temp_font.render(_text, False, (255, 255, 255))
-
-
+# Code taken from pygame wiki
+# https://www.pygame.org/wiki/Spritesheet
+#
+# Originally taken from www.scriptefun.com/transcript-2-using-sprite-sheets-and-drawing-the-background
+# and adjusted but website is no longer active
 class Spritesheet:
     def __init__(self, filename):
         try:
@@ -36,7 +37,7 @@ class Spritesheet:
     def image_at(self, rectangle, colorkey=None):
         "Loads image from x,y,x+offset,y+offset"
         rect = pygame.Rect(rectangle)
-        image = pygame.Surface(rect.size).convert()
+        image = pygame.Surface(rect.size).convert_alpha()
         image.blit(self.sheet, (0, 0), rect)
         if colorkey is not None:
             if colorkey == -1:
@@ -77,16 +78,12 @@ class Checkbox:
         self.sprite = Spritesheet("assets/textures/gui/checkbox.png")
 
     def render(self):
-        on = self.sprite.image_at((0, 0, 32, 32))
-        off = self.sprite.image_at((0, 32, 32, 64))
-        if self.state:
-            return on, self.text.render()
-            #pygame.draw.rect(pygame.display.get_surface(), (0, 255, 0),  on.get_rect())
-        else:
-            return off, self.text.render()
-            #pygame.draw.rect(pygame.display.get_surface(), (0, 0, 255), off.get_rect())
+        #     Base sprite (No hover)                  Hover sprite
+        off = (self.sprite.image_at((0, 0, 32, 32)), self.sprite.image_at((32, 0, 32, 32)))
+        on = (self.sprite.image_at((0, 32, 32, 32)), self.sprite.image_at((32, 32, 32, 32)))
 
-        #return self.text.render()
+        sprite = off, on
+        return sprite[int(self.state)][int(self.on_hover())]
 
     def get_pos(self):
         return self.pos
@@ -106,7 +103,7 @@ class Checkbox:
 
 
 class Text:
-    def __init__(self, _text, font_name, size, x=0, y=0, font_type=None):
+    def __init__(self, _text, font_name, size, font_type=None, x=0, y=0):
         if os.path.isdir(f"assets/fonts/{font_name}"):
             self.font = pygame.font.Font(f"assets/fonts/{font_name}/{font_type}.ttf")
         else:
@@ -115,8 +112,17 @@ class Text:
         self.text = _text
         self.pos = (x, y)
 
+        self.font_name = font_name
+        self.font_size = size
+
     def render(self):
         return self.font.render(self.text, False, self.colour)
+
+    def get_font(self):
+        return self.font_name
+
+    def get_font_size(self):
+        return self.font_size
 
     def get_text(self):
         return self.text
@@ -154,13 +160,16 @@ class Button:
             (self.pos[1] + self.size[1] / 2) - self.text.get_size()[1] / 2
         ))
 
-    def render(self):
-        if self.on_hover():
-            pygame.draw.rect(pygame.display.get_surface(), (255, 0, 0), self.area)
-        else:
-            pygame.draw.rect(pygame.display.get_surface(), (0, 0, 255), self.area)
+        self.sprite = Spritesheet("assets/textures/gui/button.png")
 
-        return self.text.render()
+    def render(self):
+
+        normal = self.sprite.image_at((0, 0, 128, 32))
+        hover = self.sprite.image_at((0, 32, 128, 32))
+
+        sprite = normal, hover
+
+        return pygame.transform.scale(sprite[self.on_hover()], self.get_size())
 
     def get_pos(self):
         return self.pos
@@ -207,22 +216,53 @@ class GUIScreen(pygame.Surface):
 
     def render(self):
         for component in self.components:
-            if isinstance(self.components[component], tuple):
-                pygame.display.get_surface().blit(self.components[component][0], self.components[component][1])
-            elif isinstance(self.components[component], Button):
-                text_element = self.components[component].text
-                pygame.display.get_surface().blit(self.components[component].render(), text_element.get_pos())
-            elif isinstance(self.components[component], Checkbox):
-                text_element = self.components[component].text
+            element = self.components[component]
 
-                # Checkbox image
-                pygame.display.get_surface().blit(self.components[component].render()[0], self.components[component].get_pos())
+            if isinstance(element, Button):
+                # Button texture
+                pygame.display.get_surface().blit(element.render(), element.get_pos())
+                # Button text
 
-                # Text
-                pygame.display.get_surface().blit(self.components[component].render()[1], text_element.get_pos())
+                droptext = Text(
+                    element.text.get_text(),
+                    element.text.get_font(),
+                    element.text.get_font_size(),
+                    x=element.text.get_pos()[0] + 3,
+                    y=element.text.get_pos()[1] + 3
+                )
+                droptext.set_color((20, 20, 20))
+
+                pygame.display.get_surface().blit(droptext.render(), droptext.get_pos())
+                pygame.display.get_surface().blit(element.text.render(), element.text.get_pos())
+            elif isinstance(element, Checkbox):
+                droptext = Text(
+                    element.text.get_text(),
+                    element.text.get_font(),
+                    element.text.get_font_size(),
+                    x=element.text.get_pos()[0] + 3,
+                    y=element.text.get_pos()[1] + 3
+                )
+                droptext.set_color((20, 20, 20))
+
+                pygame.display.get_surface().blit(element.render(), element.get_pos())  # Checkbox image
+                pygame.display.get_surface().blit(droptext.render(), droptext.get_pos())
+                pygame.display.get_surface().blit(element.text.render(), element.text.get_pos())  # Text
+            elif isinstance(element, Text):
+                droptext = Text(
+                    element.get_text(),
+                    element.get_font(),
+                    element.get_font_size(),
+                    x=element.get_pos()[0] + 3,
+                    y=element.get_pos()[1] + 3
+                )
+                droptext.set_color((20, 20, 20))
+
+                pygame.display.get_surface().blit(droptext.render(), droptext.get_pos())
+                pygame.display.get_surface().blit(element.render(), element.get_pos())
+            elif isinstance(element, tuple):
+                pygame.display.get_surface().blit(element[0], element[1])
             else:
-                pygame.display.get_surface().blit(self.components[component].render(),
-                                                  self.components[component].get_pos())
+                pygame.display.get_surface().blit(element.render(), element.get_pos())
 
 
 class DebugOverlay(GUIScreen):
@@ -233,18 +273,18 @@ class DebugOverlay(GUIScreen):
         window_width, window_height = pygame.display.get_surface().get_size()
 
         debug_mode_str = f"DEBUG OVERLAY - Press F12 to disable"
-        debug_mode_text = Text(debug_mode_str, "Pixellari", 26, 16, 16)
+        debug_mode_text = Text(debug_mode_str, "Pixellari", 26, x=16, y=16)
         debug_mode_text.set_color((255, 0, 0))
 
         debug_mode_warning_str = f"WARNING - Opening this menu will slow down gameplay"
-        debug_mode_warning_text = Text(debug_mode_warning_str, "Pixellari", 18, 16, 48)
+        debug_mode_warning_text = Text(debug_mode_warning_str, "Pixellari", 18, x=16, y=48)
         debug_mode_warning_text.set_color((255, 0, 0))
 
         mouse_str = f"Mouse position: {consts.MOUSE.get_pos()}"
-        mouse_text = Text(mouse_str, "Pixellari", 26, 16, 72)
+        mouse_text = Text(mouse_str, "Pixellari", 26, x=16, y=72)
 
         screen_str = f"Current screen: {Screens(consts.current_screen).name}"
-        screen_text = Text(screen_str, "Pixellari", 26, 16, 104)
+        screen_text = Text(screen_str, "Pixellari", 26, x=16, y=104)
 
         self.add_element("Debug text", debug_mode_text)
         self.add_element("Debug warning", debug_mode_warning_text)
@@ -257,10 +297,10 @@ class DebugOverlay(GUIScreen):
         self.components["Current Screen"].set_text(f"Current screen: {Screens(consts.current_screen).name}")
         if consts.game is not None:
             player_str = f"Player position: {(round(consts.game.get_player().rect[0], 2), round(consts.game.get_player().rect[1], 2))}"
-            player_text = Text(player_str, "Pixellari", 26, 16, 136)
+            player_text = Text(player_str, "Pixellari", 26, x=16, y=136)
 
             attack_str = f"Player attacking? : {consts.game.get_player().attacking}"
-            attack_text = Text(attack_str, "Pixellari", 26, 16, 170)
+            attack_text = Text(attack_str, "Pixellari", 26, x=16, y=170)
 
             self.add_element("Player position", player_text)
             self.add_element("Player attack", attack_text)
@@ -274,7 +314,7 @@ class GameOverlay(GUIScreen):
         window_width, window_height = pygame.display.get_surface().get_size()
 
         health_str = f"Health: {int(consts.game.get_player().health)}"
-        health_text = Text(health_str, "Pixellari", 26, 16, 16)
+        health_text = Text(health_str, "Pixellari", 26, x=16, y=16)
 
         self.add_element("Health text", health_text)
 
@@ -310,7 +350,7 @@ class PauseOverlay(GUIScreen):
 
         window_width, window_height = pygame.display.get_surface().get_size()
 
-        paused_text = Text("Paused", "Pixellari", 48, (window_width / 2) - 75, (window_width / 8))
+        paused_text = Text("Paused", "Pixellari", 48, x=(window_width / 2) - 75, y=(window_width / 8))
 
         play_text = Text("Back to game", "Pixellari", 26)
         play_button = Button(
@@ -416,9 +456,7 @@ class MainMenu(GUIScreen):
         move_offset = (8, -56)
         attack_offset = (8, -32)
 
-        logo_temp_text = Text("THE BEERZERKER", "Pixellari", 48, (window_width / 2) - 196,
-                              (window_height / 6))
-
+        logo_temp_text = Text("THE BEERZERKER", "Pixellari", 48, x=(window_width / 2) - 196, y=(window_height / 6))
         continue_text = Text("Continue", "Pixellari", 26)
         self.continue_button = Button(
             continue_text,
@@ -459,17 +497,17 @@ class MainMenu(GUIScreen):
         )
         self.quit_button.set_action(self.quit_action)
 
-        version_text = Text(f"Version {consts.version}", "Pixellari", 26, window_width + version_offset[0],
-                            window_height + version_offset[1])
+        version_text = Text(f"Version {consts.version}", "Pixellari", 26, x=window_width + version_offset[0],
+                            y=window_height + version_offset[1])
 
-        controls_title_text = Text("Controls:", "Pixellari", 26, controls_title_offset[0],
-                                   window_height + controls_title_offset[1])
+        controls_title_text = Text("Controls:", "Pixellari", 26, x=controls_title_offset[0],
+                                   y=window_height + controls_title_offset[1])
 
-        move_text = Text("WASD or arrow keys to move", "Pixellari", 26, move_offset[0],
-                         window_height + move_offset[1])
+        move_text = Text("WASD or arrow keys to move", "Pixellari", 26, x=move_offset[0],
+                         y=window_height + move_offset[1])
 
-        attack_text = Text("Left click to attack", "Pixellari", 26, attack_offset[0],
-                           window_height + attack_offset[1])
+        attack_text = Text("Left click to attack", "Pixellari", 26, x=attack_offset[0],
+                           y=window_height + attack_offset[1])
 
         self.add_element("Logo", logo_temp_text)
         self.add_element("Play", self.play_button)
@@ -548,31 +586,28 @@ class SettingScreen(GUIScreen):
         title_offset = (-42, 0)
 
         note_text_offset = (-360, 0)
-        note_2_text_offset =(-360, 34)
+        note_2_text_offset = (-360, 34)
 
         back_offset = (-64, 192)
 
-        screen_title = Text("Settings", "Pixellari", 26, (window_width / 2) + title_offset[0],
-                            (window_width / 12) + title_offset[1])
+        screen_title = Text("Settings", "Pixellari", 26, x=(window_width / 2) + title_offset[0],
+                            y=(window_width / 12) + title_offset[1])
 
         note_text = Text("Changing game settings, in-game, is currently not implemented.", "Pixellari", 26,
-                         (window_width / 2) + note_text_offset[0],
-                         (window_width / 6) + note_text_offset[1])
+                         x=(window_width / 2) + note_text_offset[0],
+                         y=(window_width / 6) + note_text_offset[1])
 
         note_2_text = Text("Current game settings can be modified in the \"settings.json\" file.", "Pixellari", 26,
-                         (window_width / 2) + note_2_text_offset[0],
-                         (window_width / 6) + note_2_text_offset[1])
+                           x=(window_width / 2) + note_2_text_offset[0],
+                           y=(window_width / 6) + note_2_text_offset[1])
 
-        #
-        #checkbox_test_text = Text("Checkbox TEST", "Pixellari", 26, (window_width / 2) + back_offset[0],
-        #                 (window_height / 2) + back_offset[1])
-        #checkbox_test = Checkbox(
-        #    checkbox_test_text,
-        #    (window_width / 8 + back_offset[0], window_height / 8 + back_offset[1] + 64),
-        #)
+        checkbox_test_text = Text("Checkbox TEST", "Pixellari", 26)
+        checkbox_test = Checkbox(
+            checkbox_test_text,
+            (window_width / 8 + back_offset[0], window_height / 8 + back_offset[1] + 64),
+        )
 
-        back_text = Text("Back", "Pixellari", 26, (window_width / 2) + back_offset[0],
-                         (window_height / 2) + back_offset[1])
+        back_text = Text("Back", "Pixellari", 26)
         back_button = Button(
             back_text,
             (window_width / 2 + back_offset[0], window_height / 2 + back_offset[1]),
@@ -580,13 +615,13 @@ class SettingScreen(GUIScreen):
         )
         back_button.set_action(self.back_action)
 
-        self.add_element("Credit title", screen_title)
+        self.add_element("Settings title", screen_title)
 
         self.add_element("Note Text", note_text)
         self.add_element("Note 2 Text", note_2_text)
 
         self.add_element("Back button", back_button)
-        # self.add_element("Checkbox test", checkbox_test)
+        self.add_element("Checkbox test", checkbox_test)
 
 
 class CreditScreen(GUIScreen):
@@ -601,47 +636,40 @@ class CreditScreen(GUIScreen):
         window_width, window_height = pygame.display.get_surface().get_size()
         title_offset = (-42, 0)
 
-        lead_programmer_title_offset = (-105, 0)
-        lead_programmer_credit_offset = (-69, 32)
-
-        programmer_title_offset = (-80, 16)
-        programmer_credit_offset = (-129, 48)
-
-        artist_title_offset = (-39, -96)
-        artist_credit_1_offset = (-129, -64)
-        artist_credit_2_offset = (-87, -32)
+        credit_title_offset = ((window_width / 2) - 94, (window_width / 8))
+        credit_person_offset = ((window_width / 2), (window_width / 8) + 32)
 
         back_offset = (-64, 192)
 
-        screen_title = Text("Credits", "Pixellari", 26, (window_width / 2) + title_offset[0],
-                            (window_width / 12) + title_offset[1])
+        screen_title = Text("Credits", "Pixellari", 26,
+                            x=(window_width / 2) + title_offset[0],
+                            y=(window_width / 12) + title_offset[1])
 
         lead_programmer_title = Text("Lead Programmer", "Pixellari", 26,
-                                     (window_width / 2) + lead_programmer_title_offset[0],
-                                     (window_width / 6) + lead_programmer_title_offset[1])
+                                     x=credit_title_offset[0],
+                                     y=credit_title_offset[1])
         lead_programmer_credit = Text("Nathan Dow", "Pixellari", 26,
-                                      (window_width / 2) + lead_programmer_credit_offset[0],
-                                      (window_width / 6) + lead_programmer_credit_offset[1])
+                                      x=credit_person_offset[0] + (lead_programmer_title.get_pos()[0] / 2) - (128 + 90),
+                                      y=lead_programmer_title.get_pos()[1] + 32)
 
         programmer_title = Text("Programmers", "Pixellari", 26,
-                                (window_width / 2) + programmer_title_offset[0],
-                                (window_width / 4) + programmer_title_offset[1])
+                                x=credit_title_offset[0] + 16,
+                                y=credit_title_offset[1] * 2)
         programmer_credit = Text("Bartosz Swieszkowski", "Pixellari", 26,
-                                 (window_width / 2) + programmer_credit_offset[0],
-                                 (window_width / 4) + programmer_credit_offset[1])
+                                 x=credit_person_offset[0] + (programmer_title.get_pos()[0] / 2) - (256 + 32),
+                                 y=programmer_title.get_pos()[1] + 32)
 
         artist_title = Text("Artists", "Pixellari", 26,
-                            (window_width / 2) + artist_title_offset[0],
-                            (window_width / 2) + artist_title_offset[1])
+                            x=credit_title_offset[0] + 64,
+                            y=credit_title_offset[1] * 3)
         artist_credit_1 = Text("Bartosz Swieszkowski", "Pixellari", 26,
-                               (window_width / 2) + artist_credit_1_offset[0],
-                               (window_width / 2) + artist_credit_1_offset[1])
+                               x=credit_person_offset[0] + (artist_title.get_pos()[0] / 2) - (256 + 56),
+                               y=artist_title.get_pos()[1] + 32)
         artist_credit_2 = Text("Conner Hughes", "Pixellari", 26,
-                               (window_width / 2) + artist_credit_2_offset[0],
-                               (window_width / 2) + artist_credit_2_offset[1])
+                               x=credit_person_offset[0] + (artist_title.get_pos()[0] / 2 - (256 + 8)),
+                               y=artist_title.get_pos()[1] + 64)
 
-        back_text = Text("Back", "Pixellari", 26, (window_width / 2) + back_offset[0],
-                         (window_height / 2) + back_offset[1])
+        back_text = Text("Back", "Pixellari", 26)
         back_button = Button(
             back_text,
             (window_width / 2 + back_offset[0], window_height / 2 + back_offset[1]),

@@ -22,6 +22,9 @@ logo = [
 ]
 
 
+# Mouse class
+# Simply used for mouse position
+# Will probably be removed in future.
 class Mouse:
 
     def __init__(self):
@@ -34,6 +37,8 @@ class Mouse:
         return self.pos
 
 
+# Logger class
+# Used for logging what's happening with the game.
 class Logger:
 
     def __init__(self):
@@ -44,6 +49,7 @@ class Logger:
             print(line[:-1])
         self.date = {}
 
+    # Write log message to file and console based on log type and component
     def log(self, log, component, message):
         self.time = datetime.datetime.now()
         date = {
@@ -65,18 +71,23 @@ class Logger:
         self.file.write(line + "\n")
         print(line)
 
+    # Simply logs to file/console as debug
     def debug(self, component, message):
         self.log("debug", component, message)
 
+    # Simply logs to file/console as info
     def info(self, component, message):
         self.log("info", component, message)
 
+    # Simply logs to file/console as warning
     def warning(self, component, message):
         self.log("warning", component, message)
 
+    # Simply logs to file/console as error
     def error(self, component, message):
         self.log("error", component, message)
 
+    # Stops logging to file and console, reserved for program quit
     def stop(self):
         self.info("VALHALLA", "Stopping...")
         month = f"0{self.date['month']}" if self.date['month'] < 10 else str(self.date['month'])
@@ -85,16 +96,16 @@ class Logger:
         minute = f"0{self.date['minute']}" if self.date['minute'] < 10 else str(self.date['minute'])
         second = f"0{self.date['second']}" if self.date['second'] < 10 else str(self.date['second'])
         self.file.close()
+
+        # Move log file to logs folder and rename to current date and time
         if not os.path.exists("logs"):
             os.mkdir("logs")
         shutil.move("log.txt", f"logs/")
         os.rename("logs/log.txt",
                   f"logs/{self.date['year']}-{month}-{day} {hour}-{minute}-{second}.txt")
 
-        # print()
-        # print(f"Saved to {os.getcwd()}\logs\{self.date['year']}-{self.month}-{self.day} {self.hour}-{self.minute}-{self.second}.txt")
 
-
+# Stops all processes for the game
 def quit_game():
     consts.running = False
     consts.LOGGER.info("Pygame", "Stopping...")
@@ -102,9 +113,18 @@ def quit_game():
     quit()
 
 
+# Constrains a value between a minimum and maximum value.
+#
+# Taken from p5.js
+# https://github.com/processing/p5.js/blob/main/src/math/calculation.js#L111
+
 def constrain(value, low, high):
     return max(min(value, high), low)
 
+# Remaps a number from one range to another
+#
+# Taken from p5.js and modified to fit python
+# https://github.com/processing/p5.js/blob/main/src/math/calculation.js#L450
 
 def bind(value, currentStart, currentStop, targetStart, targetStop, withinBounds):
     new_value = (value - currentStart) / (currentStop - currentStart) * (targetStop - targetStart) + targetStart
@@ -117,6 +137,8 @@ def bind(value, currentStart, currentStop, targetStart, targetStop, withinBounds
         return constrain(new_value, targetStop, targetStart)
 
 
+# Creates a settings file and uses
+# settings template to initialize values
 def create_settings_file():
     with open("settings.json", "w") as file:
         json.dump(consts.SETTINGS_TEMPLATE, file)
@@ -125,6 +147,8 @@ def create_settings_file():
     consts.LOGGER.info("Valhalla", "Saving settings to file")
 
 
+# Saves any value in settings constant
+# to settings file
 def save_to_settings_file():
     with open("settings.json", "w") as file:
         json.dump(consts.SETTINGS, file)
@@ -133,6 +157,10 @@ def save_to_settings_file():
     consts.LOGGER.info("Valhalla", "Saving settings to file")
 
 
+# Loads settings file if can be found
+# Once loaded, checks if all values can
+# be found, if not, will restore the value
+# from the settings template constant
 def load_settings_file():
     try:
         with open("settings.json", "r") as file:
@@ -151,6 +179,8 @@ def load_settings_file():
                 consts.SETTINGS[template_key] = consts.SETTINGS_TEMPLATE[template_key]
                 save_to_settings_file()
 
+        # Checks if gane resolution is more than the current window resolution
+        # if so, set the resolution size to the window resolution
         if consts.SETTINGS['RESOLUTION']['WIDTH'] > ctypes.windll.user32.GetSystemMetrics(0):
             consts.SETTINGS['RESOLUTION']['WIDTH'] = ctypes.windll.user32.GetSystemMetrics(0)
         if consts.SETTINGS['RESOLUTION']['HEIGHT'] > ctypes.windll.user32.GetSystemMetrics(1):

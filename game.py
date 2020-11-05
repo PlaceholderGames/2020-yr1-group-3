@@ -4,73 +4,11 @@
 """
 
 import pygame
-import math
-from pygame.locals import *
 from consts import LOGGER
 from enums import Direction
 from util import bind
 
 from random import randint, random
-
-"""
-class Player(pygame.Rect):
-
-    def __init__(self):
-        super().__init__((pygame.display.get_surface().get_size()[0] / 2, pygame.display.get_surface().get_size()[1] / 2), (32, 32))
-        window_width, window_height = pygame.display.get_surface().get_size()
-        self.x = window_width / 2
-        self.y = window_height / 2
-        self.speed = 1.4
-        self.sprinting = False
-        self.move_left = False
-        self.move_right = False
-        self.move_up = False
-        self.move_down = False
-        self.attacking = False
-
-    def move_player(self):
-        if self.move_up:
-            if self.sprinting:
-                self.y -= (self.speed * 4)
-            else:
-                self.y -= self.speed
-
-        if self.move_down:
-            if self.sprinting:
-                self.y += (self.speed * 4)
-            else:
-                self.y += self.speed
-
-        if self.move_left:
-            if self.sprinting:
-                self.x -= (self.speed * 4)
-            else:
-                self.x -= self.speed
-
-        if self.move_right:
-            if self.sprinting:
-                self.x += (self.speed * 4)
-            else:
-                self.x += self.speed
-
-        if self.x + 16 > pygame.display.get_surface().get_size()[0]:
-            self.x = pygame.display.get_surface().get_size()[0] - 16
-        elif self.x - 16 < 0:
-            self.x = 16
-
-        if self.y + 16 > pygame.display.get_surface().get_size()[1]:
-            self.y = pygame.display.get_surface().get_size()[1] - 16
-        elif self.y - 16 < 0:
-            self.y = 16
-
-    def draw(self):
-        if self.attacking:
-            pygame.draw.rect(pygame.display.get_surface(), (255, 0, 0), (self.x + 16, self.y - 4, 32, 8))
-        pygame.draw.rect(pygame.display.get_surface(), (255, 255, 255), (self.x - 16, self.y - 16, 32, 32))
-        pygame.draw.rect(pygame.display.get_surface(), (255, 0, 0), (self.x - 2, self.y - 2, 4, 4))
-
-"""
-
 
 # Uses player as a rectangle
 # https://stackoverflow.com/questions/32061507/moving-a-rectangle-in-pygame
@@ -154,8 +92,16 @@ class Enemy(object):
     def __init__(self):
         self.screen = pygame.display.get_surface()
         self.health = 100
+
+        # Limit enemy spawn to window size
         self.rect = pygame.rect.Rect(
-            (randint(0, self.screen.get_size()[0]), randint(0, self.screen.get_size()[1]), 32, 32))
+            (
+                randint(0, self.screen.get_size()[0] - 32),
+                randint(0, self.screen.get_size()[1] - 32),
+                32,
+                32
+            )
+        )
         self.speed = 1
         self.hurting = 0
 
