@@ -4,11 +4,14 @@
 """
 
 import pygame
-from consts import LOGGER
+import cmath
+
+import consts
 from enums import Direction
-from util import bind
+from util import bind, Spritesheet, lerp
 
 from random import randint, random
+
 
 # Uses player as a rectangle
 # https://stackoverflow.com/questions/32061507/moving-a-rectangle-in-pygame
@@ -16,6 +19,7 @@ class Player(object):
     def __init__(self):
         self.screen = pygame.display.get_surface()
         self.health = 100
+        self.items = []
         self.attacking = 0
         self.rect = pygame.rect.Rect((self.screen.get_size()[0] / 2, self.screen.get_size()[1] / 2, 32, 32))
         self.atkr = pygame.rect.Rect((self.screen.get_size()[0] / 2, self.screen.get_size()[1] / 2, 16, 32))
@@ -41,6 +45,9 @@ class Player(object):
             self.facing_direction = Direction.DOWN
             self.rect.move_ip(0, self.speed)
             self.atkr.move_ip(0, self.speed)
+
+    def take_damage(self, damage):
+        self.health -= damage
 
     def handle_mouse(self):
         mouse = pygame.mouse.get_pos()
@@ -130,17 +137,52 @@ class Enemy(object):
             self.hurting -= 1
 
 
+class DroppedItem(object):
+    def __init__(self):
+        self.screen = pygame.display.get_surface()
+        self.rect = pygame.rect.Rect((
+            randint(0, self.screen.get_size()[0] - 32),
+            randint(0, self.screen.get_size()[1] - 32),
+            32, 32
+        ))
+
+    def draw(self):
+        pygame.draw.rect(self.screen, (0, 255, 0), self.rect)
+
+
+class Tile(object):
+    def __init__(self, x, y):
+        self.rect = (x, y, 32, 32)
+
+    def draw(self, x, y):
+        sprite = Spritesheet("assets/textures/spritesheets/Tiles.png")
+        pygame.display.get_surface().blit(sprite.image_at(self.rect), (x, y))
+
+        # pygame.draw.rect(self.screen, (0, 255, 0), sprite.image_at(self.rect))
+        # self.screen.blit(sprite.image_at(self.rect))
+
+
+TILE_LIST = {
+    "Grass": Tile(0, 0),
+    "Cobble": Tile(32, 0)
+}
+
+
 class Game:
 
     def __init__(self):
         self.player = Player()
         self.enemies = []
         self.pedestrians = []
+        self.floorItems = []
         self.game_over = False
         self.paused = False
 
         for enemy in range(1):
             self.enemies.append(Enemy())
+
+        for items in range(0, randint(3, 5)):
+            self.floorItems.append(DroppedItem())
 
         # TODO: See Pedestrian#walk()
         # for pedestrian in range(randint(6, 16)):
@@ -162,29 +204,48 @@ class Game:
         return self.game_over
 
     def render(self):
+        surface = pygame.display.get_surface()
+
+        #Scene
+        """
+        #scene_1 = pygame.image.load("assets/textures/scenes/scene_1.png")
+        #surface_width, surface_height = surface.get_size()
+        #surface_aspect_ratio = surface_width/surface_height
+        #scene_1 = pygame.transform.scale(scene_1, (int(scene_1.get_size()[0] * surface_aspect_ratio), int(scene_1.get_size()[1] * surface_aspect_ratio)))
+        #surface.blit(scene_1, (0,0))
+        """
+
+        for item in self.floorItems:
+            item.draw()
+
         self.player.draw()
         for enemy in self.enemies:
             enemy.draw()
 
     def update(self):
-        if self.player.health <= 0 or len(self.enemies) == 0:
+        if self.player.health <= 0 or self.get_enemies() == 0:
             self.game_over = True
-            LOGGER.info("VALHALLA", "Game over! Going back to MAIN_MENU")
+            consts.LOGGER.info("VALHALLA", "Game over! Going back to MAIN_MENU")
 
         self.player.update()
         self.player.handle_keys()
         self.player.handle_mouse()
 
+        for index, item in enumerate(self.floorItems):
+            if self.get_player().rect.colliderect(item.rect):
+                self.get_player().items.append(item)
+                self.floorItems.pop(index)
+
         for index, enemy in enumerate(self.enemies):
             enemy.follow(self.player)
             enemy.update()
             if enemy.rect.colliderect(self.player.rect):
-                self.player.health -= 0.1
+                self.get_player().take_damage(0.1)
 
-            if enemy.rect.colliderect(self.player.atkr) or (
-                    enemy.rect.colliderect(self.player.rect) and enemy.rect.colliderect(self.player.atkr)):
-                enemy.hurting = 100
-                enemy.health -= 0.5
+            if self.player.attacking != 0:
+                if enemy.rect.colliderect(self.player.atkr) or (enemy.rect.colliderect(self.player.rect) and enemy.rect.colliderect(self.player.atkr)):
+                    enemy.hurting = 100
+                    enemy.health -= 0.5
 
             if enemy.health <= 0:
                 self.enemies.pop(index)

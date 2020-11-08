@@ -16,46 +16,12 @@ pygame.font.init()
 
 # Initialize an image
 # Probably replaced with a class soon
-def image(image_file):
-    _image = pygame.image.load(image_file).convert_alpha()
-    return _image
-
-
-# Code taken from pygame wiki
-# https://www.pygame.org/wiki/Spritesheet
-#
-# Originally taken from www.scriptefun.com/transcript-2-using-sprite-sheets-and-drawing-the-background
-# and adjusted but website is no longer active
-class Spritesheet:
-    def __init__(self, filename):
-        try:
-            self.sheet = pygame.image.load(filename).convert_alpha()
-        except pygame.error as message:
-            consts.LOGGER("Valhalla", f"Unable to load image as a spritesheet: {filename}")
-
-    # Load a specific image from a specific rectangle
-    def image_at(self, rectangle, colorkey=None):
-        "Loads image from x,y,x+offset,y+offset"
-        rect = pygame.Rect(rectangle)
-        image = pygame.Surface(rect.size).convert_alpha()
-        image.blit(self.sheet, (0, 0), rect)
-        if colorkey is not None:
-            if colorkey == -1:
-                colorkey = image.get_at((0, 0))
-            image.set_colorkey(colorkey, pygame.RLEACCEL)
-        return image
-
-    # Load a whole bunch of images and return them as a list
-    def images_at(self, rects, colorkey=None):
-        "Loads multiple images, supply a list of coordinates"
-        return [self.image_at(rect, colorkey) for rect in rects]
-
-    # Load a whole strip of images
-    def load_strip(self, rect, image_count, colorkey=None):
-        "Loads a strip of images and returns them as a list"
-        tups = [(rect[0] + rect[2] * x, rect[1], rect[2], rect[3])
-                for x in range(image_count)]
-        return self.images_at(tups, colorkey)
+def image(image_file, transparency=False):
+    _image = pygame.image.load(image_file)
+    if transparency:
+        transparency_color = _image.get_at((0, 0))
+        _image.set_colorkey(transparency_color)
+    return _image.convert_alpha()
 
 
 class Checkbox:
@@ -75,12 +41,12 @@ class Checkbox:
             (self.pos[1] + 18) - self.text.get_size()[1] / 2
         ))
 
-        self.sprite = Spritesheet("assets/textures/gui/checkbox.png")
+        self.sprite = util.Spritesheet("assets/textures/gui/checkbox.png")
 
     def render(self):
         #     Base sprite (No hover)                  Hover sprite
-        off = (self.sprite.image_at((0, 0, 32, 32)), self.sprite.image_at((32, 0, 32, 32)))
-        on = (self.sprite.image_at((0, 32, 32, 32)), self.sprite.image_at((32, 32, 32, 32)))
+        off = (self.sprite.image_at((0, 0, 32, 32), -1), self.sprite.image_at((32, 0, 32, 32), -1))
+        on = (self.sprite.image_at((0, 32, 32, 32), -1), self.sprite.image_at((32, 32, 32, 32), -1))
 
         sprite = off, on
         return sprite[int(self.state)][int(self.on_hover())]
@@ -160,12 +126,11 @@ class Button:
             (self.pos[1] + self.size[1] / 2) - self.text.get_size()[1] / 2
         ))
 
-        self.sprite = Spritesheet("assets/textures/gui/button.png")
+        self.sprite = util.Spritesheet("assets/textures/gui/button.png")
 
     def render(self):
-
-        normal = self.sprite.image_at((0, 0, 128, 32))
-        hover = self.sprite.image_at((0, 32, 128, 32))
+        normal = self.sprite.image_at((0, 0, 128, 32), -1)
+        hover = self.sprite.image_at((0, 32, 128, 32), -1)
 
         sprite = normal, hover
 
@@ -398,16 +363,32 @@ class SplashScreen(GUIScreen):
 
         window_width, window_height = pygame.display.get_surface().get_size()
 
-        usw_logo = image("assets/textures/gui/usw_logo.png")
+        usw_logo = image("assets/textures/gui/usw_logo.jpg")
+        usw_logo = pygame.transform.scale(usw_logo, (192, 192))
+
         usw_logo_width, usw_logo_height = usw_logo.get_size()
         self.add_element_position("USW logo", usw_logo,
-                                  (window_width / 2 - usw_logo_width / 2, window_height / 2 - usw_logo_height))
+                                  (window_width / 2 - usw_logo_width / 2, window_height / 2 - (usw_logo_height / 2)))
 
-        caption_str = "A game created by students at the University of South Wales"
-        caption_text = Text(caption_str, "Pixellari", 26, window_width / 2, window_height / 2)
+        caption_str = "A game created by students at the"
+        usw_str = "University of South Wales"
+
+        caption_text = Text(caption_str, "Pixellari", 26)
+        usw_text = Text(usw_str, "Pixellari", 26)
+
         caption_text_width, caption_text_height = caption_text.get_size()
-        caption_text.set_pos(((window_width / 2) - caption_text_width / 2, window_height / 2 - caption_text_height))
+        usw_text_width, usw_text_height = usw_text.get_size()
+
+        caption_text.set_pos((
+            window_width / 2 - caption_text_width / 2,
+            (window_height / 2 + usw_logo_height / 2) + caption_text_height
+            #window_height / 2 + (caption_text_height / 2
+        ))
+        usw_text.set_pos((
+            window_width / 2 - usw_text_width / 2,
+            (window_height / 2 + usw_logo_height / 2) + (usw_text_height / 2) + caption_text_height + 16))
         self.add_element("Caption", caption_text)
+        self.add_element("USW", usw_text)
 
 
 class MainMenu(GUIScreen):
@@ -579,33 +560,40 @@ class SettingScreen(GUIScreen):
         consts.LOGGER.debug("VALHALLA", "Back button pressed")
         consts.current_screen = consts.last_screen
 
+    def save_action(self):
+        consts.LOGGER.debug("VALHALLA", "Save button pressed")
+        consts.SETTINGS = {
+            "FULLSCREEN": self.fullscreen_checkbox.state
+        }
+        util.save_to_settings_file()
+        consts.current_screen = consts.last_screen
+
     def __init__(self):
         super().__init__()
 
         window_width, window_height = pygame.display.get_surface().get_size()
+        fullscreen_checkbox_offset = (0,0)
+        fullscreen_checkbox_text = Text("Fullscreen*", "Pixellari", 26)
+        self.fullscreen_checkbox = Checkbox(
+            fullscreen_checkbox_text,
+            (window_width / 6 + fullscreen_checkbox_offset[0], window_height / 3 + fullscreen_checkbox_offset[1]),
+        )
+        self.fullscreen_checkbox.state = consts.SETTINGS['FULLSCREEN']
+
         title_offset = (-42, 0)
 
-        note_text_offset = (-360, 0)
+        note_text_offset = (-270, 0)
         note_2_text_offset = (-360, 34)
 
-        back_offset = (-64, 192)
+        back_offset = (-128, 192)
+        save_offset = (32, 192)
 
         screen_title = Text("Settings", "Pixellari", 26, x=(window_width / 2) + title_offset[0],
                             y=(window_width / 12) + title_offset[1])
 
-        note_text = Text("Changing game settings, in-game, is currently not implemented.", "Pixellari", 26,
+        note_text = Text("Settings marked with '*' require a game restart.", "Pixellari", 26,
                          x=(window_width / 2) + note_text_offset[0],
-                         y=(window_width / 6) + note_text_offset[1])
-
-        note_2_text = Text("Current game settings can be modified in the \"settings.json\" file.", "Pixellari", 26,
-                           x=(window_width / 2) + note_2_text_offset[0],
-                           y=(window_width / 6) + note_2_text_offset[1])
-
-        checkbox_test_text = Text("Checkbox TEST", "Pixellari", 26)
-        checkbox_test = Checkbox(
-            checkbox_test_text,
-            (window_width / 8 + back_offset[0], window_height / 8 + back_offset[1] + 64),
-        )
+                         y=(window_width / 8) + note_text_offset[1])
 
         back_text = Text("Back", "Pixellari", 26)
         back_button = Button(
@@ -615,13 +603,22 @@ class SettingScreen(GUIScreen):
         )
         back_button.set_action(self.back_action)
 
+        save_text = Text("Save", "Pixellari", 26)
+        save_button = Button(
+            save_text,
+            (window_width / 2 + save_offset[0], window_height / 2 + save_offset[1]),
+            (128, 64)
+        )
+        save_button.set_action(self.save_action)
+
         self.add_element("Settings title", screen_title)
 
         self.add_element("Note Text", note_text)
-        self.add_element("Note 2 Text", note_2_text)
+        #self.add_element("Note 2 Text", note_2_text)
 
         self.add_element("Back button", back_button)
-        self.add_element("Checkbox test", checkbox_test)
+        self.add_element("Save button", save_button)
+        self.add_element("Checkbox test", self.fullscreen_checkbox)
 
 
 class CreditScreen(GUIScreen):
@@ -640,7 +637,6 @@ class CreditScreen(GUIScreen):
         credit_person_offset = ((window_width / 2), (window_width / 8) + 32)
 
         back_offset = (-64, 192)
-
         screen_title = Text("Credits", "Pixellari", 26,
                             x=(window_width / 2) + title_offset[0],
                             y=(window_width / 12) + title_offset[1])
