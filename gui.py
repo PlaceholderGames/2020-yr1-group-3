@@ -280,7 +280,6 @@ class GameOverlay(GUIScreen):
 
         health_str = f"Health: {int(consts.game.get_player().health)}"
         health_text = Text(health_str, "Pixellari", 26, x=16, y=16)
-
         self.add_element("Health text", health_text)
 
     def render(self):
@@ -403,6 +402,7 @@ class MainMenu(GUIScreen):
         consts.current_screen = Screens.GAME
         consts.LOGGER.info("VALHALLA", "Initializing new game")
         consts.game = Game()
+        consts.start_time = pygame.time.get_ticks()
 
     def settings_action(self):
         consts.LOGGER.debug("VALHALLA", "Settings button pressed")
