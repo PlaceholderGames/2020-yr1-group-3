@@ -132,3 +132,4 @@ dmypy.json
 # Valhalla engine
 settings.json
 /logs
+/output

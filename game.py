@@ -7,7 +7,7 @@ import pygame
 import cmath
 
 import consts
-from enums import Direction
+from enums import Direction, Scenes
 from util import bind, Spritesheet, lerp
 
 from random import randint, random
@@ -100,20 +100,19 @@ class Player(Entity):
 
     def update(self):
         super(Player, self).update()
+        self.attack_rects = {
+            "UP": pygame.rect.Rect((self.rect.x, self.rect.y - self.rect.height, self.rect.width, self.rect.height)),
+            "RIGHT": pygame.rect.Rect((self.rect.x + self.rect.width, self.rect.y, self.rect.width, self.rect.height)),
+            "DOWN": pygame.rect.Rect((self.rect.x, self.rect.y + self.rect.height, self.rect.width, self.rect.height)),
+            "LEFT": pygame.rect.Rect((self.rect.x - self.rect.width, self.rect.y, self.rect.width, self.rect.height)),
+        }
+
         if self.attacking != 0:
             self.attacking -= 1
         elif self.attacking < 0:
             self.attacking = 0
 
-        # Cardinal points
-        if self.facing_direction == Direction.RIGHT:
-            self.atkr = pygame.rect.Rect((self.rect.x + 32, self.rect.y, 32, 32))
-        elif self.facing_direction == Direction.LEFT:
-            self.atkr = pygame.rect.Rect((self.rect.x, self.rect.y, -32, 32))
-        elif self.facing_direction == Direction.UP:
-            self.atkr = pygame.rect.Rect((self.rect.x, self.rect.y, 32, -32))
-        elif self.facing_direction == Direction.DOWN:
-            self.atkr = pygame.rect.Rect((self.rect.x, self.rect.y + 32, 32, 32))
+        self.atkr = self.attack_rects[self.facing_direction.name]
 
     def add_item(self, item):
         if type(item) == DroppedItem:
@@ -164,16 +163,18 @@ class Enemy(Entity):
 
     def draw(self):
         super(Enemy, self).draw()
+        healthPercent = self.health
         if self.hurting != 0:
             # Health bar - background
             pygame.draw.rect(self.screen, (24, 102, 19), (self.rect.x, self.rect.y - 32, 32, 16))
             pygame.draw.rect(self.screen, (58, 196, 51),
-                             (self.rect.x, self.rect.y - 32, bind(self.health, 0, 100, 0, 32, True), 16))
+                             (self.rect.x, self.rect.y - 32, bind(healthPercent, 0, 100, 0, 32, True), 16))
         # pygame.draw.rect(self.screen, (255, 0, 0), self.rect)
 
     def update(self):
         super(Enemy, self).update()
         if self.hurting != 0:
+            # consts.LOGGER.debug("VALHALLA", f"Enemy health: {self.health}")
             self.hurting -= 1
 
 
@@ -200,21 +201,26 @@ class Collidable(object):
         self.draw_rect = pygame.rect.Rect(rect)
         self.collisionThickness = 2
         self.collideEdges = {
-            "TOP":          pygame.rect.Rect((self.draw_rect.x + self.collisionThickness, self.draw_rect.y,
-                                              self.draw_rect.width - self.collisionThickness, self.collisionThickness)),
-            "RIGHT":        pygame.rect.Rect((self.draw_rect.x + (self.draw_rect.width - self.collisionThickness), self.draw_rect.y + self.collisionThickness,
-                                              self.collisionThickness, self.draw_rect.height - self.collisionThickness)),
-            "BOTTOM":       pygame.rect.Rect((self.draw_rect.x + self.collisionThickness, self.draw_rect.y + (self.draw_rect.height - self.collisionThickness),
-                                              self.draw_rect.width - self.collisionThickness, self.collisionThickness)),
-            "LEFT":         pygame.rect.Rect((self.draw_rect.x, self.draw_rect.y + self.collisionThickness,
-                                              self.collisionThickness, self.draw_rect.height - self.collisionThickness)),
-            "TOP_LEFT":     pygame.rect.Rect((self.draw_rect.x, self.draw_rect.y,
-                                              self.collisionThickness, self.collisionThickness)),
-            "TOP_RIGHT":    pygame.rect.Rect((self.draw_rect.x + (self.draw_rect.width - self.collisionThickness), self.draw_rect.y,
-                                              self.collisionThickness, self.collisionThickness)),
-            "BOTTOM_LEFT":  pygame.rect.Rect((self.draw_rect.x, self.draw_rect.y + (self.draw_rect.height - self.collisionThickness),
-                                              self.collisionThickness, self.collisionThickness)),
-            "BOTTOM_RIGHT": pygame.rect.Rect((self.draw_rect.x + (self.draw_rect.width - self.collisionThickness), self.draw_rect.y + (self.draw_rect.height - self.collisionThickness),
+            "TOP": pygame.rect.Rect((self.draw_rect.x + self.collisionThickness, self.draw_rect.y,
+                                     self.draw_rect.width - self.collisionThickness, self.collisionThickness)),
+            "RIGHT": pygame.rect.Rect((self.draw_rect.x + (self.draw_rect.width - self.collisionThickness),
+                                       self.draw_rect.y + self.collisionThickness,
+                                       self.collisionThickness, self.draw_rect.height - self.collisionThickness)),
+            "BOTTOM": pygame.rect.Rect((self.draw_rect.x + self.collisionThickness,
+                                        self.draw_rect.y + (self.draw_rect.height - self.collisionThickness),
+                                        self.draw_rect.width - self.collisionThickness, self.collisionThickness)),
+            "LEFT": pygame.rect.Rect((self.draw_rect.x, self.draw_rect.y + self.collisionThickness,
+                                      self.collisionThickness, self.draw_rect.height - self.collisionThickness)),
+            "TOP_LEFT": pygame.rect.Rect((self.draw_rect.x, self.draw_rect.y,
+                                          self.collisionThickness, self.collisionThickness)),
+            "TOP_RIGHT": pygame.rect.Rect(
+                (self.draw_rect.x + (self.draw_rect.width - self.collisionThickness), self.draw_rect.y,
+                 self.collisionThickness, self.collisionThickness)),
+            "BOTTOM_LEFT": pygame.rect.Rect(
+                (self.draw_rect.x, self.draw_rect.y + (self.draw_rect.height - self.collisionThickness),
+                 self.collisionThickness, self.collisionThickness)),
+            "BOTTOM_RIGHT": pygame.rect.Rect((self.draw_rect.x + (self.draw_rect.width - self.collisionThickness),
+                                              self.draw_rect.y + (self.draw_rect.height - self.collisionThickness),
                                               self.collisionThickness, self.collisionThickness))
 
         }
@@ -223,65 +229,144 @@ class Collidable(object):
 
         for edge in self.collideEdges:
             collisionEdge = self.collideEdges[edge]
-            if edge == "TOP" and collisionEdge.colliderect(entity.rect):
-                entity.rect.y = self.draw_rect.y - entity.rect.height
-            elif edge == "RIGHT" and collisionEdge.colliderect(entity.rect):
-                entity.rect.x = self.draw_rect.x + self.draw_rect.width
-            elif edge == "BOTTOM" and collisionEdge.colliderect(entity.rect):
-                entity.rect.y = self.draw_rect.y + self.draw_rect.height
-            elif edge == "LEFT" and collisionEdge.colliderect(entity.rect):
-                entity.rect.x = self.draw_rect.x - entity.rect.width
-        """
-        if entity.rect.y < (
-                self.collide_rect.y + self.collide_rect.height) and entity.rect.y + entity.rect.height > self.collide_rect.y:
-            if (self.collide_rect.x < entity.rect.x < self.collide_rect.x + self.collide_rect.width) or (
-                    self.collide_rect.x < entity.rect.x + entity.rect.width < self.collide_rect.x + self.collide_rect.width):
-                self.collideEdges["LEFT"] = (entity.rect.x + entity.rect.width > self.collide_rect.x) and\
-                                            (entity.rect.x + entity.rect.width > self.collide_rect.x + self.collisionThickness)
+            if collisionEdge.colliderect(entity.rect):
+                if edge == "TOP":
+                    entity.rect.y = self.draw_rect.y - entity.rect.height
+                elif edge == "RIGHT":
+                    entity.rect.x = self.draw_rect.x + self.draw_rect.width
+                elif edge == "BOTTOM":
+                    entity.rect.y = self.draw_rect.y + self.draw_rect.height
+                elif edge == "LEFT":
+                    entity.rect.x = self.draw_rect.x - entity.rect.width
+                elif edge == "TOP_LEFT":
+                    entity.rect.x = self.draw_rect.x - entity.rect.width
+                    entity.rect.y = self.draw_rect.y - entity.rect.height
+                elif edge == "TOP_RIGHT":
+                    entity.rect.x = self.draw_rect.x + self.draw_rect.width
+                    entity.rect.y = self.draw_rect.y - entity.rect.height
+                elif edge == "BOTTOM_LEFT":
+                    entity.rect.x = self.draw_rect.x - entity.rect.width
+                    entity.rect.y = self.draw_rect.y + self.draw_rect.height
+                elif edge == "BOTTOM_RIGHT":
+                    entity.rect.x = self.draw_rect.x + entity.rect.width
+                    entity.rect.y = self.draw_rect.y + self.draw_rect.height
 
-                self.collideEdges["RIGHT"] = (entity.rect.x < self.collide_rect.x + self.collide_rect.width) and\
-                                             (entity.rect.x < self.collide_rect.x + self.collide_rect.width - self.collisionThickness)
-
-                self.collideEdges["TOP"] = (entity.rect.y + entity.rect.height > self.collide_rect.y)
-                self.collideEdges["BOTTOM"] = (entity.rect.y > self.collide_rect.y + self.collide_rect.height)
-
-                if self.collideEdges["LEFT"]:
-                    entity.rect.x = self.collide_rect.x - entity.rect.width
-                elif self.collideEdges["RIGHT"]:
-                    entity.rect.x = self.collide_rect.x + self.collide_rect.width
-        """
+    def is_colliding(self, entity):
+        return self.draw_rect.colliderect(entity.rect)
 
     def draw(self):
-        pygame.draw.rect(pygame.display.get_surface(), (0, 0, 255), self.draw_rect)
+        surface = pygame.display.get_surface()
+        pygame.draw.rect(surface, (0, 0, 255), self.draw_rect)
         if consts.SETTINGS['DEBUG_OVERLAY']:
             for edge in self.collideEdges:
-                pygame.draw.rect(pygame.display.get_surface(), (255, 127, 127), self.collideEdges[edge])
+                collisonEdge = self.collideEdges[edge]
+                pygame.draw.rect(surface, (255, 127, 127), collisonEdge)
+
+
+class Portal(object):
+
+    def __init__(self, rect, target_scene, target_pos):
+        self.rect = pygame.rect.Rect(rect)
+        self.target_scene = target_scene
+        self.target_coords = target_pos
+
+    def update(self, player):
+        if self.rect.colliderect(player.rect):
+            consts.current_scene = self.target_scene.value
+            player.rect.x, player.rect.y = self.target_coords
+
+    def render(self):
+        surface = pygame.display.get_surface()
+        pygame.draw.rect(surface, (128, 0, 255), self.rect)
+
+class Scene(object):
+
+    def __init__(self, entities, collisions, portals):
+        self.entities = entities
+        self.collisions = collisions
+        self.portals = portals
+        self.last_player_pos = (0,0)
+
+    def remaining_enemies(self):
+        return len(self.entities["ENEMY"])
+
+    def get_entities(self):
+        return self.entities
+
+    def get_entities_by_type(self, type):
+        return self.entities[type]
+
+    def update(self, player):
+        self.last_player_pos = (player.rect.x, player.rect.y)
+
+        for portal in self.portals:
+            portal.update(player)
+
+        for entityType in self.entities:
+            for index, entity in enumerate(self.entities[entityType]):
+                for collision in self.collisions:
+                    if type(entity) == Enemy or type(entity) == DroppedItem:
+                        collision.update(entity)
+                    collision.update(player)
+
+                if type(entity) == Enemy:
+                    entity.follow(player)
+                    if entity.collides(player) or player.collides(entity):
+                        player.take_damage(0.1)
+
+                    if player.attacking != 0:
+                        if entity.rect.colliderect(player.atkr) or (entity.rect.colliderect(player.rect) and entity.rect.colliderect(player.atkr)):
+                            entity.hurting = 100
+                            entity.health -= 0.5
+
+                    if entity.health <= 0:
+                        self.entities["ENEMY"].pop(index)
+
+                if type(entity) == DroppedItem:
+                    if entity.picked_up(player):
+                        player.add_item(entity)
+                        self.entities["ITEMS"].pop(index)
+
+                if type(entity) == Enemy or type(entity) == DroppedItem:
+                    entity.update()
+
+
+    def render(self):
+        for portal in self.portals:
+            portal.render()
+
+        for collision in self.collisions:
+            collision.draw()
+
+        for item in self.entities["ITEMS"]:
+            if type(item) == DroppedItem:
+                item.draw()
+
+        for enemy in self.entities["ENEMY"]:
+            if type(enemy) == Enemy:
+                enemy.draw()
 
 
 class Game:
 
     def __init__(self):
         self.player = Player()
-        self.entities = {
-            "ENEMY": [],
-            "ITEMS": [],
-            "PEDESTRIAN": []
-        }
-        self.collidables = [
-            Collidable((400, 100, 100, 50))
+
+        self.scenes = [
+            Scene(
+                {"ENEMY": [Enemy()], "ITEMS": [DroppedItem()], "PEDESTRIAN": []},
+                [Collidable((428, 9, 92, 202))],
+                [Portal((500,0,64,8), Scenes.LEVEL_1, (self.player.rect.x,pygame.display.get_surface().get_size()[1]))]
+            ),
+            Scene(
+                {"ENEMY": [Enemy()], "ITEMS": [DroppedItem()], "PEDESTRIAN": []},
+                [Collidable((428, 9, 92, 202))],
+                [Portal((500, pygame.display.get_surface().get_size()[1] - 8, 64, 8), Scenes.TUTORIAL, (self.player.rect.x + 32, 0))]
+            )
         ]
-        # self.enemies = []
-        # self.pedestrians = []
-        # self.floorItems = []
+
         self.game_over = False
         self.paused = False
-
-        for enemy in range(1):
-            # self.enemies.append(Enemy())
-            self.entities['ENEMY'].append(Enemy())
-
-        for items in range(0, randint(3, 5)):
-            self.entities['ITEMS'].append(DroppedItem())
 
         # TODO: See Pedestrian#walk()
         # for pedestrian in range(randint(6, 16)):
@@ -289,12 +374,6 @@ class Game:
 
     def get_player(self):
         return self.player
-
-    def get_entities(self):
-        return len(self.entities)
-
-    def get_entity(self, entityType):
-        return self.entities[str(entityType).upper()]
 
     def is_paused(self):
         return self.paused
@@ -309,35 +388,20 @@ class Game:
         surface = pygame.display.get_surface()
 
         # Scene
-        """
-        #scene_1 = pygame.image.load("assets/textures/scenes/scene_1.png")
-        #surface_width, surface_height = surface.get_size()
-        #surface_aspect_ratio = surface_width/surface_height
-        #scene_1 = pygame.transform.scale(scene_1, (int(scene_1.get_size()[0] * surface_aspect_ratio), int(scene_1.get_size()[1] * surface_aspect_ratio)))
-        #surface.blit(scene_1, (0,0))
-        """
-
-        for item in self.get_entity("items"):
-            item.draw()
-
-        for collidable in self.collidables:
-            collidable.draw()
+        # scene_1 = pygame.image.load("assets/textures/scenes/tutorial.png")
+        # scene_1 = pygame.transform.scale(scene_1, surface.get_size())
+        # surface.blit(scene_1, (0,0))
 
         self.player.draw()
-
-        for enemy in self.get_entity("enemy"):
-            enemy.draw()
+        self.scenes[consts.current_scene].render()
 
     def update(self):
         consts.time_since_start = pygame.time.get_ticks() - consts.start_time
+        currentScene = self.scenes[consts.current_scene]
 
-        for collidable in self.collidables:
-            for entityType in self.entities:
-                for entity in self.entities[entityType]:
-                    collidable.update(entity)
-            collidable.update(self.get_player())
+        self.scenes[consts.current_scene].update(self.player)
 
-        if self.player.health <= 0 or len(self.get_entity("enemy")) == 0:
+        if self.player.health <= 0 or currentScene.remaining_enemies() == 0:
             self.game_over = True
             consts.LOGGER.info("VALHALLA", "Game over! Going back to MAIN_MENU")
 
@@ -345,25 +409,13 @@ class Game:
         self.player.handle_keys()
         self.player.handle_mouse()
 
-        for index, item in enumerate(self.get_entity("items")):
-            if item.picked_up(self.get_player()):
-                self.get_player().add_item(item)
-                self.get_entity("items").pop(index)
+        # for enemy in self.get_entity("enemy"):
+        #     enemy.follow(self.get_player())
+        #     enemy.update()
+        #     if enemy.collides(self.get_player()) or self.get_player().collides(enemy):
+        #         self.get_player().take_damage(0.1)
 
-        for enemy in self.get_entity("enemy"):
-            # enemy.follow(self.get_player())
-            enemy.update()
-            if enemy.collides(self.get_player()) or self.get_player().collides(enemy):
-                self.get_player().take_damage(0.1)
-
-        #    if self.player.attacking != 0:
-        #        if enemy.rect.colliderect(self.player.atkr) or (
-        #                enemy.rect.colliderect(self.player.rect) and enemy.rect.colliderect(self.player.atkr)):
-        #            enemy.hurting = 100
-        #            enemy.health -= 0.5
-
-        #    if enemy.health <= 0:
-        #        self.enemies.pop(index)
+        #
 
         # TODO: See Pedestrian#walk()
         # for pedestrian in self.pedestrians:

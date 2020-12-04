@@ -9,13 +9,13 @@ import util
 import datetime
 import ctypes
 
-from gui import MainMenu, SplashScreen, DebugOverlay, GameOverlay, CreditScreen, PauseOverlay, SettingScreen
+from gui import MainMenu, SplashScreen, DebugOverlay, GameOverlay, CreditScreen, PauseOverlay, SettingScreen, GameOverOverlay
 from enums import Screens
 
 def main():
 
     # Setup pygame
-    clock = pygame.time.Clock()
+    consts.clock = pygame.time.Clock()
     pygame.init()
     pygame.font.init()
     consts.LOGGER.info("Pygame", "Pygame and its components have been initialized")
@@ -52,6 +52,7 @@ def main():
     settings_screen = SettingScreen()
     credit_screen = CreditScreen()
     debug_overlay = DebugOverlay()
+    game_result = GameOverOverlay()
 
     while consts.running:
         # Probably unneccessary to have a Mouse constant, just use pygame.mouse
@@ -104,13 +105,18 @@ def main():
             if consts.game.is_game_over():
 
                 # Determine if you have won or lost
-                if consts.game.get_enemies() == 0:
-                    consts.LOGGER.info("VALHALLA", "You won!")
-                else:
-                    consts.LOGGER.info("VALHALLA", "You lost!")
+                # if consts.game.scenes[consts.current_scene].remaining_enemies() == 0:
+                #     consts.LOGGER.info("VALHALLA", "You won!")
+                #
+                # else:
+                #     consts.LOGGER.info("VALHALLA", "You lost!")
 
-                consts.current_screen = Screens.MAIN_MENU
-                consts.game = None
+                consts.game.render()
+                game_result.handle_mouse_event()
+                game_result.render()
+
+                # consts.current_screen = Screens.MAIN_MENU
+                # consts.game = None
             else:
 
                 # Render game whilst the game hasn't ended
@@ -170,7 +176,7 @@ def main():
         pygame.display.update()
 
         # Limit framerate to 120fps - Should we remove?
-        clock.tick(120)
+        consts.clock.tick()
 
 
 #try:

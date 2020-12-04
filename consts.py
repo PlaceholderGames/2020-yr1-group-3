@@ -11,10 +11,13 @@ version = "0.6.0"
 
 current_screen = Screens.SPLASHSCREEN
 last_screen = Screens.SPLASHSCREEN
+current_scene = 0
 time_since_start = 0
 start_time = None
 LOGGER = Logger()
 MOUSE = Mouse()
+
+clock = None
 
 SETTINGS_TEMPLATE = {
     "DEBUG_OVERLAY": False,

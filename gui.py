@@ -234,6 +234,7 @@ class DebugOverlay(GUIScreen):
 
     def __init__(self):
         super().__init__()
+        self.clock = pygame.time.Clock()
 
         window_width, window_height = pygame.display.get_surface().get_size()
 
@@ -251,15 +252,20 @@ class DebugOverlay(GUIScreen):
         screen_str = f"Current screen: {Screens(consts.current_screen).name}"
         screen_text = Text(screen_str, "Pixellari", 26, x=16, y=104)
 
+        fps_str = f"FPS: {int(consts.clock.get_fps())}"
+        fps_text = Text(fps_str, "Pixellari", 26, x=16, y=202)
+
         self.add_element("Debug text", debug_mode_text)
         self.add_element("Debug warning", debug_mode_warning_text)
         self.add_element("Mouse position", mouse_text)
         self.add_element("Current Screen", screen_text)
+        self.add_element("FPS", fps_text)
 
     def render(self):
         super(DebugOverlay, self).render()
         self.components["Mouse position"].set_text(f"Mouse position: {consts.MOUSE.get_pos()}")
         self.components["Current Screen"].set_text(f"Current screen: {Screens(consts.current_screen).name}")
+        self.components["FPS"].set_text(f"FPS: {int(consts.clock.get_fps())}")
         if consts.game is not None:
             player_str = f"Player position: {(round(consts.game.get_player().rect[0], 2), round(consts.game.get_player().rect[1], 2))}"
             player_text = Text(player_str, "Pixellari", 26, x=16, y=136)
@@ -303,6 +309,7 @@ class PauseOverlay(GUIScreen):
 
     def quit_action(self):
         consts.current_screen = Screens.MAIN_MENU
+        consts.game.paused = False
 
     def __init__(self):
         super().__init__()
@@ -354,6 +361,71 @@ class PauseOverlay(GUIScreen):
         self.add_element("Credits", credits_button)
         self.add_element("Quit", quit_button)
 
+
+class GameOverOverlay(GUIScreen):
+
+    def playerWon(self):
+        if consts.game != None:
+            return consts.game.get_player().health > 0
+
+    def play_action(self):
+        consts.LOGGER.debug("VALHALLA", "Going back to game")
+        # if !(playerWon()):
+        #     consts.game = Game()
+        # else:
+        #     consts.game.paused = False
+        if self.playerWon():
+            consts.game.paused = False
+            consts.game.scenes[consts.current_scene].entities["ENEMY"].append(1)
+            consts.game.game_over = False
+        else:
+            consts.game = Game()
+
+    def quit_action(self):
+        consts.current_screen = Screens.MAIN_MENU
+        consts.game.paused = False
+
+
+    def __init__(self):
+        super().__init__()
+
+        play_offset = (-164, -64)
+        quit_offset = (-164, 80)
+
+        window_width, window_height = pygame.display.get_surface().get_size()
+
+        game_result_str = ""
+        paused_text = Text("Game Over!", "Pixellari", 48, x=(window_width / 2) - 128, y=(window_width / 8))
+        game_result_text = Text(game_result_str, "Pixellari", 32, x=(window_width / 2) - 132, y=(window_width / 8) + 42)
+
+        play_text = Text("Play again", "Pixellari", 26)
+        play_button = Button(
+            play_text,
+            (window_width / 2 + play_offset[0], window_height / 2 + play_offset[1]),
+            (328, 64)
+        )
+        play_button.set_action(self.play_action)
+
+        quit_text = Text("Quit to main menu", "Pixellari", 26)
+        quit_button = Button(
+            quit_text,
+            (window_width / 2 + quit_offset[0], window_height / 2 + quit_offset[1]),
+            (328, 64)
+        )
+        quit_button.set_action(self.quit_action)
+
+        self.add_element("Game over text", paused_text)
+        self.add_element("Game result text", game_result_text)
+        self.add_element("Play", play_button)
+        self.add_element("Quit", quit_button)
+
+    def render(self):
+        super(GameOverOverlay, self).render()
+        game_result_str = "You won" if self.playerWon() else "You lost"
+        text_width, text_height = self.components["Game result text"].get_size()
+        game_result_pos = (pygame.display.get_surface().get_size()[0] / 2 - text_width / 2, self.components["Game result text"].get_pos()[1])
+        self.components["Game result text"].set_pos(game_result_pos)
+        self.components["Game result text"].set_text(game_result_str)
 
 class SplashScreen(GUIScreen):
 
