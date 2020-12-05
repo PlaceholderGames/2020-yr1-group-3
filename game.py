@@ -66,6 +66,7 @@ class Player(Entity):
         self.atkr = pygame.rect.Rect((self.screen.get_size()[0] / 2, self.screen.get_size()[1] / 2, 16, 32))
         self.facing_direction = Direction.RIGHT
         self.attack_direction = Direction.RIGHT
+        self.drunkenness = 100
         self.speed = 1.6
 
     def handle_keys(self):
@@ -113,6 +114,7 @@ class Player(Entity):
             self.attacking = 0
 
         self.atkr = self.attack_rects[self.facing_direction.name]
+        self.drunkenness -= 0.05
 
     def add_item(self, item):
         if type(item) == DroppedItem:
@@ -361,7 +363,7 @@ class Game:
             Scene(
                 {"ENEMY": [Enemy()], "ITEMS": [DroppedItem()], "PEDESTRIAN": []},
                 [Collidable((428, 9, 92, 202))],
-                [Portal((500, pygame.display.get_surface().get_size()[1] - 8, 64, 8), Scenes.TUTORIAL, (self.player.rect.x + 32, 0))]
+                [Portal((500, pygame.display.get_surface().get_size()[1] - 8, 64, 8), Scenes.TUTORIAL, (self.player.rect.x + 64, 0))]
             )
         ]
 

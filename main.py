@@ -52,9 +52,13 @@ def main():
     settings_screen = SettingScreen()
     credit_screen = CreditScreen()
     debug_overlay = DebugOverlay()
-    game_result = GameOverOverlay()
 
     while consts.running:
+        if consts.game is not None:
+            game_result = GameOverOverlay()
+            game_overlay = GameOverlay()
+            game_pause = PauseOverlay()
+
         # Probably unneccessary to have a Mouse constant, just use pygame.mouse
         consts.MOUSE.update(pygame.mouse.get_pos())
         consts.LOGGER.launch_time = datetime.datetime.now()
@@ -98,8 +102,6 @@ def main():
         elif consts.current_screen == Screens.GAME:
 
             # Initialize game overlays
-            game_overlay = GameOverlay()
-            game_pause = PauseOverlay()
 
             # Check if game has ended
             if consts.game.is_game_over():

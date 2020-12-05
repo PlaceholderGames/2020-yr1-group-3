@@ -133,3 +133,4 @@ dmypy.json
 settings.json
 /logs
 /output
+*.psd

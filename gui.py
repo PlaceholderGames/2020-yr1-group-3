@@ -7,6 +7,7 @@ import re
 import consts
 import util
 import os
+import math
 
 from enums import Screens
 from game import Game
@@ -16,12 +17,28 @@ pygame.font.init()
 
 # Initialize an image
 # Probably replaced with a class soon
-def image(image_file, transparency=False):
-    _image = pygame.image.load(image_file)
-    if transparency:
-        transparency_color = _image.get_at((0, 0))
-        _image.set_colorkey(transparency_color)
-    return _image.convert_alpha()
+# def image(image_file, transparency=False):
+#     _image = pygame.image.load(image_file)
+#     if transparency:
+#         transparency_color = _image.get_at((0, 0))
+#         _image.set_colorkey(transparency_color)
+#     return _image.convert_alpha()
+
+
+class Image:
+    def __init__(self, img_path, position=(0, 0)):
+        self.img = pygame.image.load(img_path)
+        self.pos = position
+        self.area = (self.pos[0], self.pos[1], 32, 32)
+
+    def render(self):
+        return self.img.convert_alpha()
+
+    def get_pos(self):
+        return self.pos
+
+    def set_pos(self, pos):
+        self.pos = pos
 
 
 class Checkbox:
@@ -153,6 +170,84 @@ class Button:
                consts.MOUSE.get_pos()[1] < self.area[1] + self.area[3]
 
 
+class Heart:
+    def __init__(self, state, position=(0, 0)):
+        self.pos = position
+        self.state = state
+        self.area = (
+            self.pos[0],
+            self.pos[1],
+            32,
+            32
+        )
+
+        self.sprite = util.Spritesheet("assets/textures/spritesheets/heart.png")
+
+    def render(self):
+        full = self.sprite.image_at((0, 0, 32, 32))
+        half = self.sprite.image_at((32, 0, 32, 32))
+        none = self.sprite.image_at((64, 0, 32, 32))
+
+        sprite = {
+            "NONE": none,
+            "HALF": half,
+            "FULL": full
+        }
+
+        return sprite[self.state]
+
+    def get_pos(self):
+        return self.pos
+
+    def get_state(self):
+        return self.state
+
+    def set_state(self, state):
+        self.state = state
+
+    def set_pos(self, pos):
+        self.pos = pos
+
+
+class Beer:
+    def __init__(self, state, position=(0, 0)):
+        self.pos = position
+        self.state = state
+        self.area = (
+            self.pos[0],
+            self.pos[1],
+            32,
+            32
+        )
+
+        self.sprite = util.Spritesheet("assets/textures/spritesheets/beer.png")
+
+    def render(self):
+        full = self.sprite.image_at((0, 0, 32, 32))
+        half = self.sprite.image_at((32, 0, 32, 32))
+        none = self.sprite.image_at((64, 0, 32, 32))
+
+        sprite = {
+            "NONE": none,
+            "HALF": half,
+            "FULL": full
+        }
+
+        return sprite[self.state]
+
+    def get_pos(self):
+        return self.pos
+
+    def get_state(self):
+        return self.state
+
+    def set_state(self, state):
+        self.state = state
+
+    def set_pos(self, pos):
+        self.pos = pos
+
+
 class GUIScreen(pygame.Surface):
 
     def __init__(self):
@@ -225,7 +320,12 @@ class GUIScreen(pygame.Surface):
                 pygame.display.get_surface().blit(droptext.render(), droptext.get_pos())
                 pygame.display.get_surface().blit(element.render(), element.get_pos())
             elif isinstance(element, tuple):
-                pygame.display.get_surface().blit(element[0], element[1])
+                if isinstance(element[0], list):
+                    for index, item in enumerate(element[0]):
+                        if isinstance(item, Heart) or isinstance(item, Beer):
+                            pygame.display.get_surface().blit(item.render(), element[1][index])
+                else:
+                    pygame.display.get_surface().blit(element[0], element[1])
             else:
                 pygame.display.get_surface().blit(element.render(), element.get_pos())
 
@@ -284,14 +384,59 @@ class GameOverlay(GUIScreen):
 
         window_width, window_height = pygame.display.get_surface().get_size()
 
-        health_str = f"Health: {int(consts.game.get_player().health)}"
-        health_text = Text(health_str, "Pixellari", 26, x=16, y=16)
-        self.add_element("Health text", health_text)
+        heart_offset = (16, 16)
+        heart_pos = [
+            (0 + heart_offset[0], 0 + heart_offset[1]),
+            (32 + heart_offset[0], 0 + heart_offset[1]),
+            (64 + heart_offset[0], 0 + heart_offset[1]),
+            (96 + heart_offset[0], 0 + heart_offset[1]),
+            (128 + heart_offset[0], 0 + heart_offset[1])
+        ]
+
+        beer_pos = [
+            (0 + heart_offset[0], 32 + heart_offset[1]),
+            (32 + heart_offset[0], 32 + heart_offset[1]),
+            (64 + heart_offset[0], 32 + heart_offset[1]),
+            (96 + heart_offset[0], 32 + heart_offset[1]),
+            (128 + heart_offset[0], 32 + heart_offset[1])
+        ]
+
+        current_health = util.bind(consts.game.get_player().health, 0, 100, 0, 5, True)
+        current_drunkenness = util.bind(consts.game.get_player().drunkenness, 0, 100, 0, 5, True)
+        heart_element = [Heart("NONE"), Heart("NONE"), Heart("NONE"), Heart("NONE"), Heart("NONE")]
+        beer_element = [Beer("NONE"), Beer("NONE"), Beer("NONE"), Beer("NONE"), Beer("NONE")]
+
+        for index, heart in enumerate(heart_element):
+            hearts_index = index + 1
+
+            if current_health == 5:
+                heart.set_state("FULL")
+            else:
+                if 0 >= current_health - hearts_index >= -1:
+                    heart.set_state("HALF")
+                elif current_health - hearts_index >= 0:
+                    heart.set_state("FULL")
+                elif current_health <= 0:
+                    heart.set_state("NONE")
+
+        for index, beer in enumerate(beer_element):
+            beers_index = index + 1
+
+            if current_drunkenness == 5:
+                beer.set_state("FULL")
+            else:
+                if 0 >= current_drunkenness - beers_index >= -1:
+                    beer.set_state("HALF")
+                elif current_drunkenness - beers_index >= 0:
+                    beer.set_state("FULL")
+                elif current_drunkenness <= 0:
+                    beer.set_state("NONE")
+
+        self.add_element_position("Hearts", heart_element, heart_pos)
+        self.add_element_position("Beers", beer_element, beer_pos)
 
     def render(self):
         super(GameOverlay, self).render()
-        self.components["Health text"].set_text(f"Health: {int(consts.game.get_player().health)}")
-
 
 class PauseOverlay(GUIScreen):
 
@@ -370,10 +515,6 @@ class GameOverOverlay(GUIScreen):
 
     def play_action(self):
         consts.LOGGER.debug("VALHALLA", "Going back to game")
-        # if !(playerWon()):
-        #     consts.game = Game()
-        # else:
-        #     consts.game.paused = False
         if self.playerWon():
             consts.game.paused = False
             consts.game.scenes[consts.current_scene].entities["ENEMY"].append(1)
@@ -384,7 +525,6 @@ class GameOverOverlay(GUIScreen):
     def quit_action(self):
         consts.current_screen = Screens.MAIN_MENU
         consts.game.paused = False
-
 
     def __init__(self):
         super().__init__()
@@ -423,9 +563,11 @@ class GameOverOverlay(GUIScreen):
         super(GameOverOverlay, self).render()
         game_result_str = "You won" if self.playerWon() else "You lost"
         text_width, text_height = self.components["Game result text"].get_size()
-        game_result_pos = (pygame.display.get_surface().get_size()[0] / 2 - text_width / 2, self.components["Game result text"].get_pos()[1])
+        game_result_pos = (pygame.display.get_surface().get_size()[0] / 2 - text_width / 2,
+                           self.components["Game result text"].get_pos()[1])
         self.components["Game result text"].set_pos(game_result_pos)
         self.components["Game result text"].set_text(game_result_str)
+
 
 class SplashScreen(GUIScreen):
 
@@ -434,8 +576,8 @@ class SplashScreen(GUIScreen):
 
         window_width, window_height = pygame.display.get_surface().get_size()
 
-        usw_logo = image("assets/textures/gui/usw_logo.jpg")
-        usw_logo = pygame.transform.scale(usw_logo, (192, 192))
+        usw_logo = Image("assets/textures/gui/usw_logo.jpg")
+        usw_logo = pygame.transform.scale(usw_logo.render(), (192, 192))
 
         usw_logo_width, usw_logo_height = usw_logo.get_size()
         self.add_element_position("USW logo", usw_logo,
@@ -453,7 +595,7 @@ class SplashScreen(GUIScreen):
         caption_text.set_pos((
             window_width / 2 - caption_text_width / 2,
             (window_height / 2 + usw_logo_height / 2) + caption_text_height
-            #window_height / 2 + (caption_text_height / 2
+            # window_height / 2 + (caption_text_height / 2
         ))
         usw_text.set_pos((
             window_width / 2 - usw_text_width / 2,
@@ -644,7 +786,7 @@ class SettingScreen(GUIScreen):
         super().__init__()
 
         window_width, window_height = pygame.display.get_surface().get_size()
-        fullscreen_checkbox_offset = (0,0)
+        fullscreen_checkbox_offset = (0, 0)
         fullscreen_checkbox_text = Text("Fullscreen*", "Pixellari", 26)
         self.fullscreen_checkbox = Checkbox(
             fullscreen_checkbox_text,
@@ -686,7 +828,7 @@ class SettingScreen(GUIScreen):
         self.add_element("Settings title", screen_title)
 
         self.add_element("Note Text", note_text)
-        #self.add_element("Note 2 Text", note_2_text)
+        # self.add_element("Note 2 Text", note_2_text)
 
         self.add_element("Back button", back_button)
         self.add_element("Save button", save_button)
