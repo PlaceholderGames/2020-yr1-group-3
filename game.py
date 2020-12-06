@@ -68,6 +68,7 @@ class Player(Entity):
         self.attack_direction = Direction.RIGHT
         self.drunkenness = 100
         self.speed = 1.6
+        self.rect_colour = (81, 81, 81)
 
     def handle_keys(self):
         key = pygame.key.get_pressed()
@@ -97,7 +98,7 @@ class Player(Entity):
     def draw(self):
         super(Player, self).draw()
         if self.attacking != 0:
-            pygame.draw.rect(self.screen, (154, 154, 154), self.atkr)
+            pygame.draw.rect(self.screen, (56, 56, 56), self.atkr)
 
     def update(self):
         super(Player, self).update()
@@ -114,14 +115,31 @@ class Player(Entity):
             self.attacking = 0
 
         self.atkr = self.attack_rects[self.facing_direction.name]
-        self.drunkenness = self.drunkenness - 0.05
+        self.drunkenness -= 0.05
 
         if self.drunkenness > 100:
             self.drunkenness = 100
 
+        if self.drunkenness < 90:
+            for index, item in enumerate(self.items):
+                if type(item) == Bottle:
+                    self.items.pop(index)
+                    self.drunkenness += 20
+
     def add_item(self, item):
-        if type(item) == (DroppedItem or Bottle):
-            self.items.append(item)
+        self.items.append(item)
+
+    def remove_item(self, item):
+        for index, item_entity in enumerate(self.items):
+            if item_entity == item:
+                self.items.pop(index)
+
+    def get_items_by_type(self, classType):
+        item_list = []
+        for item in self.items:
+            if type(item) == classType:
+                item_list.append(item)
+        return item_list
 
 
 class Pedestrian(object):
@@ -218,12 +236,6 @@ class Bottle(DroppedItem):
         # super(Bottle, self).draw()
         self.screen.blit(self.sprite.render(), (self.rect.x, self.rect.y))
 
-    def picked_up(self, player):
-        super(Bottle, self).picked_up(player)
-        if player.rect.colliderect(self.rect):
-            player.drunkenness += 20
-        return player.rect.colliderect(self.rect)
-
 
 class Collidable(object):
     def __init__(self, rect, inverse=False, show_collider=True):
@@ -270,12 +282,14 @@ class Collidable(object):
                     if not self.inverse:
                         entity.rect.x = self.draw_rect.x + self.draw_rect.width
                     else:
-                        entity.rect.x = (self.draw_rect.x + self.draw_rect.width) - (entity.rect.width + self.collisionThickness)
+                        entity.rect.x = (self.draw_rect.x + self.draw_rect.width) - (
+                                entity.rect.width + self.collisionThickness)
                 elif edge == "BOTTOM":
                     if not self.inverse:
                         entity.rect.y = self.draw_rect.y + self.draw_rect.height
                     else:
-                        entity.rect.y = ((self.draw_rect.y + self.draw_rect.height) - self.collisionThickness) - entity.rect.height
+                        entity.rect.y = ((
+                                                 self.draw_rect.y + self.draw_rect.height) - self.collisionThickness) - entity.rect.height
                 elif edge == "LEFT":
                     if not self.inverse:
                         entity.rect.x = self.draw_rect.x - entity.rect.width
@@ -333,7 +347,8 @@ class Scene(object):
         self.last_player_pos = (0, 0)
         self.background_image = background_img
         if self.background_image is not None:
-            self.background = pygame.transform.scale(self.background_image.render(), pygame.display.get_surface().get_size())
+            self.background = pygame.transform.scale(self.background_image.render(),
+                                                     pygame.display.get_surface().get_size())
 
     def remaining_enemies(self):
         return len(self.entities["ENEMY"])
@@ -346,6 +361,12 @@ class Scene(object):
 
     def update(self, player):
         self.last_player_pos = (player.rect.x, player.rect.y)
+
+        for items in self.entities["ITEMS"]:
+            for collision in self.collisions:
+                if items.rect.colliderect(collision.draw_rect):
+                    items.rect.x = randint(0, pygame.display.get_surface().get_size()[0])
+                    items.rect.y = randint(0, pygame.display.get_surface().get_size()[1])
 
         for portal in self.portals:
             portal.update(player)
@@ -402,12 +423,15 @@ class Game:
 
         self.scenes = [
             Scene(
-                {"ENEMY": [Enemy()], "ITEMS": [Bottle()], "PEDESTRIAN": []},
+                {
+                    "ENEMY": [Enemy(), Enemy()],
+                    "ITEMS": [Bottle(), Bottle(), Bottle(), Bottle(), Bottle(), Bottle()],
+                    "PEDESTRIAN": []},
                 [
                     # Border wall
                     Collidable((0, 0, 320, 10)),
                     Collidable((0, 0, 20, pygame.display.get_surface().get_size()[1])),
-                    Collidable((0, pygame.display.get_surface().get_size()[1]-20, 372, 20)),
+                    Collidable((0, pygame.display.get_surface().get_size()[1] - 20, 372, 20)),
                     Collidable((470, pygame.display.get_surface().get_size()[1] - 20, 330, 20)),
 
                     # Buildings
@@ -468,14 +492,6 @@ class Game:
         self.player.update()
         self.player.handle_keys()
         self.player.handle_mouse()
-
-        # for enemy in self.get_entity("enemy"):
-        #     enemy.follow(self.get_player())
-        #     enemy.update()
-        #     if enemy.collides(self.get_player()) or self.get_player().collides(enemy):
-        #         self.get_player().take_damage(0.1)
-
-        #
 
         # TODO: See Pedestrian#walk()
         # for pedestrian in self.pedestrians:

@@ -418,11 +418,25 @@ class GameOverlay(GUIScreen):
                 elif current_drunkenness <= 0:
                     beer.set_state("NONE")
 
+        bottle_img = util.Image("assets/textures/sprites/beer_bottle.png", (16, 80))
+        from game import Bottle
+        bottle_count = Text(f"x{len(consts.game.get_player().get_items_by_type(Bottle))}", "Pixellari", 16, x=bottle_img.get_pos()[0] + 16, y=bottle_img.get_pos()[1])
+
+        background = pygame.Surface((160, 96))
+        background.set_alpha(127)
+        background.fill(0)
+
+        self.add_element_position("Background overlay", background, (16,16))
         self.add_element_position("Hearts", heart_element, heart_pos)
         self.add_element_position("Beers", beer_element, beer_pos)
+        self.add_element("Bottle img", bottle_img)
+        self.add_element("Bottle count", bottle_count)
 
     def render(self):
         super(GameOverlay, self).render()
+        from game import Bottle
+        self.components["Bottle count"].set_text(f"x{len(consts.game.get_player().get_items_by_type(Bottle))}")
+
 
 class PauseOverlay(GUIScreen):
 
