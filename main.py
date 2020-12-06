@@ -124,16 +124,16 @@ def main():
                 # Render game whilst the game hasn't ended
                 consts.game.render()
 
+                if consts.SETTINGS['DEBUG_OVERLAY']:
+                    debug_overlay.render()
+                else:
+                    game_overlay.render()
+
                 if not consts.game.paused:
                     consts.game.update()
                 else:
                     game_pause.handle_mouse_event()
                     game_pause.render()
-
-                if consts.SETTINGS['DEBUG_OVERLAY']:
-                    debug_overlay.render()
-                else:
-                    game_overlay.render()
 
         # Quit game if player screen reaches Screens.QUIT
         #

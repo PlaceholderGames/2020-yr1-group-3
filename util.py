@@ -22,6 +22,25 @@ logo = [
 ]
 
 
+class Image:
+    def __init__(self, img_path, position=(0, 0), transparency=True):
+        import pygame
+        self.img = pygame.image.load(img_path)
+        self.pos = position
+        self.area = (self.pos[0], self.pos[1], 32, 32)
+        if transparency:
+            self.img.set_colorkey(self.img.get_at((0, 0)), pygame.RLEACCEL)
+
+    def render(self):
+        return self.img.convert_alpha()
+
+    def get_pos(self):
+        return self.pos
+
+    def set_pos(self, pos):
+        self.pos = pos
+
+
 # Code taken from pygame wiki
 # https://www.pygame.org/wiki/Spritesheet
 #
@@ -33,20 +52,21 @@ class Spritesheet:
         try:
             self.sheet = pygame.image.load(filename)
         except pygame.error as message:
-            consts.LOGGER("Valhalla", f"Unable to load image as a spritesheet: {filename}")
+            consts.LOGGER.error("Valhalla", f"Unable to load image as a spritesheet: {filename}")
 
     # Load a specific image from a specific rectangle
     def image_at(self, rectangle, colorkey=None):
         import pygame
         "Loads image from x,y,x+offset,y+offset"
         rect = pygame.Rect(rectangle)
-        image = pygame.Surface(rect.size).convert_alpha()
+        image = pygame.Surface(rect.size)
         image.blit(self.sheet, (0, 0), rect)
         if colorkey is not None:
             if colorkey == -1:
-                colorkey = image.get_at((0, 0))
-            image.set_colorkey(colorkey, pygame.RLEACCEL)
-        return image
+                image.set_colorkey(image.get_at((0, 0)), pygame.RLEACCEL)
+            else:
+                image.set_colorkey(colorkey, pygame.RLEACCEL)
+        return image.convert_alpha()
 
     # Load a whole bunch of images and return them as a list
     def images_at(self, rects, colorkey=None):

@@ -24,23 +24,6 @@ pygame.font.init()
 #         _image.set_colorkey(transparency_color)
 #     return _image.convert_alpha()
 
-
-class Image:
-    def __init__(self, img_path, position=(0, 0)):
-        self.img = pygame.image.load(img_path)
-        self.pos = position
-        self.area = (self.pos[0], self.pos[1], 32, 32)
-
-    def render(self):
-        return self.img.convert_alpha()
-
-    def get_pos(self):
-        return self.pos
-
-    def set_pos(self, pos):
-        self.pos = pos
-
-
 class Checkbox:
     def __init__(self, text_element, position):
         self.text = text_element
@@ -184,9 +167,9 @@ class Heart:
         self.sprite = util.Spritesheet("assets/textures/spritesheets/heart.png")
 
     def render(self):
-        full = self.sprite.image_at((0, 0, 32, 32))
-        half = self.sprite.image_at((32, 0, 32, 32))
-        none = self.sprite.image_at((64, 0, 32, 32))
+        full = self.sprite.image_at((0, 0, 32, 32), -1)
+        half = self.sprite.image_at((32, 0, 32, 32), -1)
+        none = self.sprite.image_at((64, 0, 32, 32), -1)
 
         sprite = {
             "NONE": none,
@@ -223,9 +206,9 @@ class Beer:
         self.sprite = util.Spritesheet("assets/textures/spritesheets/beer.png")
 
     def render(self):
-        full = self.sprite.image_at((0, 0, 32, 32))
-        half = self.sprite.image_at((32, 0, 32, 32))
-        none = self.sprite.image_at((64, 0, 32, 32))
+        full = self.sprite.image_at((0, 0, 32, 32), -1)
+        half = self.sprite.image_at((32, 0, 32, 32), -1)
+        none = self.sprite.image_at((64, 0, 32, 32), -1)
 
         sprite = {
             "NONE": none,
@@ -278,7 +261,10 @@ class GUIScreen(pygame.Surface):
         for component in self.components:
             element = self.components[component]
 
-            if isinstance(element, Button):
+            if isinstance(element, pygame.Surface):
+                pygame.display.get_surface().blit(element, (0,0))
+
+            elif isinstance(element, Button):
                 # Button texture
                 pygame.display.get_surface().blit(element.render(), element.get_pos())
                 # Button text
@@ -500,6 +486,11 @@ class PauseOverlay(GUIScreen):
         )
         quit_button.set_action(self.quit_action)
 
+        background = pygame.Surface(pygame.display.get_surface().get_size())
+        background.set_alpha(127)
+        background.fill(0)
+
+        self.add_element("Background overlay", background)
         self.add_element("Paused text", paused_text)
         self.add_element("Play", play_button)
         self.add_element("Settings", settings_button)
@@ -511,7 +502,7 @@ class GameOverOverlay(GUIScreen):
 
     def playerWon(self):
         if consts.game != None:
-            return consts.game.get_player().health > 0
+            return consts.game.get_player().health > 0 and consts.game.get_player().drunkenness > 0
 
     def play_action(self):
         consts.LOGGER.debug("VALHALLA", "Going back to game")
@@ -535,10 +526,21 @@ class GameOverOverlay(GUIScreen):
         window_width, window_height = pygame.display.get_surface().get_size()
 
         game_result_str = ""
-        paused_text = Text("Game Over!", "Pixellari", 48, x=(window_width / 2) - 128, y=(window_width / 8))
-        game_result_text = Text(game_result_str, "Pixellari", 32, x=(window_width / 2) - 132, y=(window_width / 8) + 42)
+        if self.playerWon():
+            game_result_str = "Level cleared!"
+        else:
+            if consts.game.get_player().drunkenness <= 0:
+                game_result_str = "You ran out of beer!"
+            else:
+                game_result_str = "You died"
+        game_over_text = Text("Game Over!", "Pixellari", 48, x=(window_width / 2) - 128, y=(window_height / 8))
+        game_result_text = Text(game_result_str, "Pixellari", 32)
+        game_result_text.set_pos((
+            (window_width / 2) - game_result_text.get_size()[0] / 2,
+            game_over_text.get_pos()[1] + game_over_text.get_size()[1] #+ (game_result_text.get_size()[1] / 2)
+        ))
 
-        play_text = Text("Play again", "Pixellari", 26)
+        play_text = Text("Play again" if not self.playerWon() else "Continue", "Pixellari", 26)
         play_button = Button(
             play_text,
             (window_width / 2 + play_offset[0], window_height / 2 + play_offset[1]),
@@ -549,12 +551,18 @@ class GameOverOverlay(GUIScreen):
         quit_text = Text("Quit to main menu", "Pixellari", 26)
         quit_button = Button(
             quit_text,
-            (window_width / 2 + quit_offset[0], window_height / 2 + quit_offset[1]),
+            #(window_width / 2 + quit_offset[0], window_height / 2 + quit_offset[1]),
+            (play_button.get_pos()[0], play_button.get_pos()[1] + play_button.get_size()[1] + 8),
             (328, 64)
         )
         quit_button.set_action(self.quit_action)
 
-        self.add_element("Game over text", paused_text)
+        background = pygame.Surface(pygame.display.get_surface().get_size())
+        background.set_alpha(127)
+        background.fill(0)
+
+        self.add_element("Background overlay", background)
+        self.add_element("Game over text", game_over_text)
         self.add_element("Game result text", game_result_text)
         self.add_element("Play", play_button)
         self.add_element("Quit", quit_button)
@@ -576,7 +584,7 @@ class SplashScreen(GUIScreen):
 
         window_width, window_height = pygame.display.get_surface().get_size()
 
-        usw_logo = Image("assets/textures/gui/usw_logo.jpg")
+        usw_logo = util.Image("assets/textures/gui/usw_logo.jpg")
         usw_logo = pygame.transform.scale(usw_logo.render(), (192, 192))
 
         usw_logo_width, usw_logo_height = usw_logo.get_size()
@@ -692,8 +700,13 @@ class MainMenu(GUIScreen):
         )
         self.quit_button.set_action(self.quit_action)
 
-        version_text = Text(f"Version {consts.version}", "Pixellari", 26, x=window_width + version_offset[0],
-                            y=window_height + version_offset[1])
+        version_text = Text(f"Version {consts.version}", "Pixellari", 26)
+        version_text.set_pos(
+            (
+                pygame.display.get_surface().get_size()[0] - version_text.get_size()[0] - 4,
+                pygame.display.get_surface().get_size()[1] - version_text.get_size()[1]
+            )
+        )
 
         controls_title_text = Text("Controls:", "Pixellari", 26, x=controls_title_offset[0],
                                    y=window_height + controls_title_offset[1])
