@@ -522,7 +522,7 @@ class GameOverOverlay(GUIScreen):
         consts.LOGGER.debug("VALHALLA", "Going back to game")
         if self.playerWon():
             consts.game.paused = False
-            consts.game.scenes[consts.current_scene].entities["ENEMY"].append(1)
+            consts.game.scenes[consts.current_scene.value].entities["ENEMY"].append(1)
             consts.game.game_over = False
         else:
             consts.game = Game()
