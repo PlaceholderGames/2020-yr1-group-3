@@ -674,6 +674,8 @@ class MainMenu(GUIScreen):
         attack_offset = (8, -32)
 
         logo_temp_text = Text("THE BEERZERKER", "Pixellari", 48, x=(window_width / 2) - 196, y=(window_height / 6))
+        logo_icon_img = util.Image("assets/textures/sprites/beer_bottle.png")
+        logo_icon = pygame.transform.scale(logo_icon_img.render(), (64, 64))
         continue_text = Text("Continue", "Pixellari", 26)
         self.continue_button = Button(
             continue_text,
@@ -732,6 +734,7 @@ class MainMenu(GUIScreen):
                            y=window_height + attack_offset[1])
 
         self.add_element("Logo", logo_temp_text)
+        self.add_element_position("Logo Icon", logo_icon, (logo_temp_text.get_pos()[0] + logo_temp_text.get_size()[0] - 8, logo_temp_text.get_pos()[1] - 16))
         self.add_element("Play", self.play_button)
         self.add_element("Settings", self.settings_button)
         self.add_element("Credits", self.credits_button)

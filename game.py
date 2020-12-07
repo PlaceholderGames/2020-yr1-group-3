@@ -330,7 +330,7 @@ class Portal(object):
 
     def update(self, player):
         if self.rect.colliderect(player.rect):
-            consts.current_scene = self.target_scene.value
+            consts.current_scene = self.target_scene
             player.rect.x, player.rect.y = self.target_coords
 
     def render(self):
@@ -429,10 +429,15 @@ class Game:
                     "PEDESTRIAN": []},
                 [
                     # Border wall
-                    Collidable((0, 0, 320, 10)),
-                    Collidable((0, 0, 20, pygame.display.get_surface().get_size()[1])),
-                    Collidable((0, pygame.display.get_surface().get_size()[1] - 20, 372, 20)),
-                    Collidable((470, pygame.display.get_surface().get_size()[1] - 20, 330, 20)),
+                    Collidable((0, 0, 320, 10), show_collider=False),
+                    Collidable((0, 0, 20, pygame.display.get_surface().get_size()[1]), show_collider=False),
+                    Collidable((0, pygame.display.get_surface().get_size()[1] - 20, 372, 20), show_collider=False),
+                    Collidable((470, pygame.display.get_surface().get_size()[1] - 20, 330, 20), show_collider=False),
+                    Collidable((pygame.display.get_surface().get_size()[0] - 28, 192, 28, 408), show_collider=False),
+                    Collidable((pygame.display.get_surface().get_size()[0] - 80, 192, 80, 18), show_collider=False),
+                    Collidable((pygame.display.get_surface().get_size()[0] - 280, 192, 100, 18), show_collider=False),
+                    Collidable((pygame.display.get_surface().get_size()[0] - 280, 0, 16, 210), show_collider=False),
+                    Collidable((418, 0, 115, 10), show_collider=False),
 
                     # Buildings
                     Collidable((428, 9, 92, 202)),
@@ -474,16 +479,16 @@ class Game:
     def render(self):
         surface = pygame.display.get_surface()
 
-        if self.scenes[consts.current_scene].background_image is not None:
-            surface.blit(self.scenes[consts.current_scene].background, (0, 0))
+        if self.scenes[consts.current_scene.value].background_image is not None:
+            surface.blit(self.scenes[consts.current_scene.value].background, (0, 0))
         self.player.draw()
-        self.scenes[consts.current_scene].render()
+        self.scenes[consts.current_scene.value].render()
 
     def update(self):
         consts.time_since_start = pygame.time.get_ticks() - consts.start_time
-        currentScene = self.scenes[consts.current_scene]
+        currentScene = self.scenes[consts.current_scene.value]
 
-        self.scenes[consts.current_scene].update(self.player)
+        self.scenes[consts.current_scene.value].update(self.player)
 
         if self.player.health <= 0 or currentScene.remaining_enemies() == 0 or self.player.drunkenness <= 0:
             self.game_over = True

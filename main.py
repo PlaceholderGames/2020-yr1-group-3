@@ -41,6 +41,7 @@ def main():
 
     # Creates window
     pygame.display.set_caption("The BeerZerker")
+    pygame.display.set_icon(util.Image("assets/textures/sprites/beer_bottle.png").render())
     consts.LOGGER.info("Pygame", "Created window")
 
     start_time = pygame.time.get_ticks()

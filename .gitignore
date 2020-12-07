@@ -134,3 +134,4 @@ settings.json
 /logs
 /output
 *.psd
+build-config.json

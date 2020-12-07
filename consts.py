@@ -2,16 +2,16 @@
     Author:  Nathan Dow / Bitheral
     Created: 24/10/2020
 """
-from enums import Screens
+from enums import Screens, Scenes
 from util import Logger, Mouse
 
 running = True
 game = None
-version = "0.8.1"
+version = "0.8.2"
 
 current_screen = Screens.SPLASHSCREEN
 last_screen = Screens.SPLASHSCREEN
-current_scene = 0
+current_scene = Scenes.TUTORIAL
 time_since_start = 0
 start_time = None
 LOGGER = Logger()
