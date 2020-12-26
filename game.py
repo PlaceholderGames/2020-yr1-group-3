@@ -123,6 +123,8 @@ class Player(Entity):
         if self.drunkenness < 90:
             for index, item in enumerate(self.items):
                 if type(item) == Bottle:
+                    if consts.SETTINGS["HUMAN_SOUNDS"]["VALUE"]:
+                        pygame.mixer.Sound("assets/audio/sounds/game/drink_use.ogg").play()
                     self.items.pop(index)
                     self.drunkenness += 20
 
@@ -140,21 +142,6 @@ class Player(Entity):
             if type(item) == classType:
                 item_list.append(item)
         return item_list
-
-
-class Pedestrian(object):
-    def __init__(self):
-        self.screen = pygame.display.get_surface()
-        self.rect = pygame.rect.Rect(
-            (randint(0, self.screen.get_size()[0]), randint(0, self.screen.get_size()[1]), 32, 32))
-
-    def walk(self):
-        pass
-        # TODO: Implement a simple walking system for pedestrians
-
-    def draw(self):
-        pygame.draw.rect(self.screen, (0, 127, 127), self.rect)
-
 
 class Enemy(Entity):
     def __init__(self):
@@ -394,6 +381,7 @@ class Scene(object):
 
                 if type(entity) == DroppedItem or type(entity) == Bottle:
                     if entity.picked_up(player):
+                        pygame.mixer.Sound("assets/audio/sounds/game/bottle_pickup.ogg").play()
                         player.add_item(entity)
                         self.entities["ITEMS"].pop(index)
 
@@ -460,10 +448,6 @@ class Game:
         self.game_over = False
         self.paused = False
 
-        # TODO: See Pedestrian#walk()
-        # for pedestrian in range(randint(6, 16)):
-        #    self.pedestrians.append(Pedestrian())
-
     def get_player(self):
         return self.player
 
@@ -497,9 +481,3 @@ class Game:
         self.player.update()
         self.player.handle_keys()
         self.player.handle_mouse()
-
-        # TODO: See Pedestrian#walk()
-        # for pedestrian in self.pedestrians:
-        #    pedestrian.time_alive += 1
-        #    pedestrian.walk()
-        #    pedestrian.draw()

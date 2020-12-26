@@ -112,21 +112,16 @@ class Logger:
     def log(self, log, component, message):
         self.time = datetime.datetime.now()
         date = {
-            "year": self.time.year,
-            "month": self.time.month,
-            "day": self.time.day,
             "hour": self.time.hour,
             "minute": self.time.minute,
             "second": self.time.second
         }
         self.date = date
-        month = f"0{date['month']}" if date['month'] < 10 else str(date['month'])
-        day = f"0{date['day']}" if date['day'] < 10 else str(date['day'])
         hour = f"0{date['hour']}" if date['hour'] < 10 else str(date['hour'])
         minute = f"0{date['minute']}" if date['minute'] < 10 else str(date['minute'])
         second = f"0{date['second']}" if date['second'] < 10 else str(date['second'])
 
-        line = f"[{day}/{month}/{date['year']} {hour}:{minute}:{second}][{log.upper()}][{component.upper()}]: {message}"
+        line = f"[{hour}:{minute}:{second}][{log.upper()}][{component.upper()}]: {message}"
         self.file.write(line + "\n")
         print(line)
 
@@ -245,23 +240,16 @@ def load_settings_file():
     except IOError as e:
         consts.LOGGER.error("Valhalla", f"An error occurred: {e}")
     finally:
+        import platform
         fix_settings()
         save_to_settings_file()
+
         # Checks if gane resolution is more than the current window resolution
         # if so, set the resolution size to the window resolution
-        if consts.SETTINGS['RESOLUTION']['WIDTH'] > ctypes.windll.user32.GetSystemMetrics(0):
-            consts.SETTINGS['RESOLUTION']['WIDTH'] = ctypes.windll.user32.GetSystemMetrics(0)
-        if consts.SETTINGS['RESOLUTION']['HEIGHT'] > ctypes.windll.user32.GetSystemMetrics(1):
-            consts.SETTINGS['RESOLUTION']['HEIGHT'] = ctypes.windll.user32.GetSystemMetrics(1)
-
-
-def cmyk_to_rgb(c, m, y, k):
-    """
-    """
-    rgb_scale = 255
-    cmyk_scale = 100
-
-    r = rgb_scale * (1.0 - (c + k) / float(cmyk_scale))
-    g = rgb_scale * (1.0 - (m + k) / float(cmyk_scale))
-    b = rgb_scale * (1.0 - (y + k) / float(cmyk_scale))
-    return r, g, b
+        #
+        # NOTE: Only performs on Windows
+        if platform.system() == 'Windows':
+            if consts.SETTINGS['RESOLUTION']['WIDTH'] > ctypes.windll.user32.GetSystemMetrics(0):
+                consts.SETTINGS['RESOLUTION']['WIDTH'] = ctypes.windll.user32.GetSystemMetrics(0)
+            if consts.SETTINGS['RESOLUTION']['HEIGHT'] > ctypes.windll.user32.GetSystemMetrics(1):
+                consts.SETTINGS['RESOLUTION']['HEIGHT'] = ctypes.windll.user32.GetSystemMetrics(1)

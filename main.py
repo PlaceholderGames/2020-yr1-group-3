@@ -9,7 +9,7 @@ import util
 import datetime
 import ctypes
 
-from gui import MainMenu, SplashScreen, DebugOverlay, GameOverlay, CreditScreen, PauseOverlay, SettingScreen, GameOverOverlay
+from gui import MainMenu, SplashScreen, DebugOverlay, GameOverlay, CreditScreen, PauseOverlay, SettingScreen, GameOverOverlay, DisturbingSoundScreen
 from enums import Screens
 
 def main():
@@ -17,6 +17,7 @@ def main():
     # Setup pygame
     consts.clock = pygame.time.Clock()
     pygame.init()
+    pygame.mixer.init()
     pygame.font.init()
     consts.LOGGER.info("Pygame", "Pygame and its components have been initialized")
 
@@ -31,7 +32,7 @@ def main():
     # Checks if fullscreen setting is true;
     if consts.SETTINGS['FULLSCREEN']:
 
-        # Makes window fulllscreen to screen resolution if so
+        # Makes window fullscreen to screen resolution if so
         window = pygame.display.set_mode((ctypes.windll.user32.GetSystemMetrics(0), ctypes.windll.user32.GetSystemMetrics(1)), pygame.FULLSCREEN)
     else:
 
@@ -53,6 +54,7 @@ def main():
     settings_screen = SettingScreen()
     credit_screen = CreditScreen()
     debug_overlay = DebugOverlay()
+    sound_warning_screen = DisturbingSoundScreen()
 
     while consts.running:
         if consts.game is not None:
@@ -139,8 +141,13 @@ def main():
         # Quit game if player screen reaches Screens.QUIT
         #
         elif consts.current_screen == Screens.QUIT:
-            consts.LOGGER.info("VALHALLA", "QUIT Screen recognised. Quitting game...")
-            util.quit_game()
+            if not pygame.mixer.get_busy():
+                consts.LOGGER.info("VALHALLA", "QUIT Screen recognised. Quitting game...")
+                util.quit_game()
+
+        elif consts.current_screen == Screens.SOUND_WARNING:
+            sound_warning_screen.render()
+            sound_warning_screen.handle_mouse_event()
 
         # Show debug overlay
         if consts.SETTINGS['DEBUG_OVERLAY']:

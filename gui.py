@@ -25,7 +25,7 @@ pygame.font.init()
 #     return _image.convert_alpha()
 
 class Checkbox:
-    def __init__(self, text_element, position):
+    def __init__(self, text_element, position=(0,0)):
         self.text = text_element
         self.pos = position
         self.state = False
@@ -54,13 +54,27 @@ class Checkbox:
     def get_pos(self):
         return self.pos
 
+    def get_size(self):
+        return 40 + self.text.get_size()[0], 32
+
     def set_state(self, state):
         self.state = state
 
     def set_pos(self, pos):
         self.pos = pos
+        self.text.set_pos((
+            (self.pos[0] + 40),
+            (self.pos[1] + 18) - self.text.get_size()[1] / 2
+        ))
+        self.area = (
+            self.pos[0],
+            self.pos[1],
+            32,
+            32
+        )
 
     def toggle(self):
+        pygame.mixer.Sound("assets/audio/sounds/gui/button_click.ogg").play()
         self.state = not self.state
 
     def on_hover(self):
@@ -110,7 +124,7 @@ class Text:
 
 
 class Button:
-    def __init__(self, text_element, position, size):
+    def __init__(self, text_element, size, position=(0,0)):
         self.text = text_element
         self.pos = position
         self.size = size
@@ -144,6 +158,16 @@ class Button:
 
     def set_pos(self, pos):
         self.pos = pos
+        self.text.set_pos((
+            (self.pos[0] + self.size[0] / 2) - self.text.get_size()[0] / 2,
+            (self.pos[1] + self.size[1] / 2) - self.text.get_size()[1] / 2
+        ))
+        self.area = (
+            self.pos[0],
+            self.pos[1],
+            self.size[0],
+            self.size[1]
+        )
 
     def set_action(self, action):
         self.action = action
@@ -251,6 +275,7 @@ class GUIScreen(pygame.Surface):
                 if isinstance(self.components[component], Button):
                     button = self.components[component]
                     if button.on_hover():
+                        pygame.mixer.Sound("assets/audio/sounds/gui/button_click.ogg").play()
                         button.action()
                 elif isinstance(self.components[component], Checkbox):
                     checkbox = self.components[component]
@@ -363,6 +388,107 @@ class DebugOverlay(GUIScreen):
             self.add_element("Player attack", attack_text)
 
 
+class DisturbingSoundScreen(GUIScreen):
+
+    def continue_action(self):
+        consts.LOGGER.debug("VALHALLA", "Continue button pressed")
+        consts.SETTINGS["HUMAN_SOUNDS"]["SKIP_WARNING"] = self.remember_warning_checkbox.state
+        util.save_to_settings_file()
+        consts.current_screen = Screens.GAME
+        consts.LOGGER.info("VALHALLA", "Initializing new game")
+        consts.game = Game()
+        consts.start_time = pygame.time.get_ticks()
+
+    def setting_action(self):
+        consts.LOGGER.debug("VALHALLA", "Save button pressed")
+        consts.last_screen = Screens.SOUND_WARNING
+        consts.current_screen = Screens.SETTINGS
+
+    def __init__(self):
+        super().__init__()
+
+        window_width, window_height = pygame.display.get_surface().get_size()
+        fullscreen_checkbox_offset = (0, 0)
+
+        title_offset = (-42, 0)
+
+        note_text_offset = (-270, 0)
+        note_2_text_offset = (-360, 34)
+
+        save_offset = (-128, 192)
+        back_offset = (32, 192)
+
+        screen_title = Text("WARNING!", "Pixellari", 32)
+        screen_title.set_color((255,0,0))
+        screen_title.set_pos(((window_width / 2) - (screen_title.get_size()[0] / 2), (window_width / 12) + title_offset[1]))
+
+        note_11_text = Text("This game contains sounds to which some people",
+                         "Pixellari", 26)
+        note_11_text.set_pos(((window_width / 2) - (note_11_text.get_size()[0] / 2), (screen_title.get_pos()[1] + note_11_text.get_size()[1] + 16)))
+
+        note_12_text = Text("may find disturbing and/or disgusting.", "Pixellari", 26)
+        note_12_text.set_pos(((window_width / 2) - (note_12_text.get_size()[0] / 2), (note_11_text.get_pos()[1] + note_12_text.get_size()[1])))
+
+        note_21_text = Text("If you are easily disturbed by the sounds of:", "Pixellari", 26)
+        note_21_text.set_pos(((window_width / 2) - (note_21_text.get_size()[0] / 2), (note_12_text.get_pos()[1] + note_21_text.get_size()[1] + 16)))
+
+        note_221_text = Text("Belching", "Pixellari", 26)
+        note_221_text.set_pos((note_21_text.get_pos()[0] + 16, (note_21_text.get_pos()[1] + note_221_text.get_size()[1])))
+        note_222_text = Text("Swallowing", "Pixellari", 26)
+        note_222_text.set_pos((note_21_text.get_pos()[0] + 16, (note_221_text.get_pos()[1] + note_222_text.get_size()[1])))
+
+        self.note_23_text = Text("Please disable the setting 'Enable Human sounds'", "Pixellari", 26)
+        self.note_23_text.set_pos(((window_width / 2) - (self.note_23_text.get_size()[0] / 2), (note_222_text.get_pos()[1] + self.note_23_text.get_size()[1] + 16)))
+
+        remember_warning_checkbox_text = Text("Don't show this again", "Pixellari", 26)
+
+        save_text = Text("Continue", "Pixellari", 26)
+        save_button = Button(
+            save_text,
+            (save_text.get_size()[0] + 16, 64)
+        )
+        save_button.set_pos(((window_width / 2) - save_button.get_size()[0] - 16, window_height - save_button.get_size()[1] - 32))
+        save_button.set_action(self.continue_action)
+
+        settings_text = Text("Settings", "Pixellari", 26)
+        settings_button = Button(
+            settings_text,
+            (settings_text.get_size()[0] + 16, 64),
+        )
+        settings_button.set_pos((save_button.get_pos()[0] + save_button.get_size()[0] + 16, save_button.get_pos()[1]))
+        settings_button.set_action(self.setting_action)
+
+        self.remember_warning_checkbox = Checkbox(remember_warning_checkbox_text)
+        self.remember_warning_checkbox.set_pos(
+            (
+                (window_width / 2) - (self.remember_warning_checkbox.get_size()[0] / 2) + 2,
+                save_button.get_pos()[1] - self.remember_warning_checkbox.get_size()[1] - 16
+            )
+        )
+        self.remember_warning_checkbox.state = consts.SETTINGS["HUMAN_SOUNDS"]["SKIP_WARNING"]
+
+        self.add_element("Screen title", screen_title)
+        self.add_element("Note 1.1 Text", note_11_text)
+        self.add_element("Note 1.2 Text", note_12_text)
+        self.add_element("Note 2.1 Text", note_21_text)
+        self.add_element("Note 2.2.1 Text", note_221_text)
+        self.add_element("Note 2.2.2 Text", note_222_text)
+        self.add_element("Note 2.3 Text", self.note_23_text)
+        # self.add_element("Note 22 Text", note_22_text)
+
+        self.add_element("Back button", settings_button)
+        self.add_element("Save button", save_button)
+        self.add_element("Skip warning checkbox", self.remember_warning_checkbox)
+
+    def render(self):
+        super(DisturbingSoundScreen, self).render()
+        window_width = pygame.display.get_surface().get_size()[0]
+        note_3_text = Text(f"You currently have the setting { 'enabled' if consts.SETTINGS['HUMAN_SOUNDS']['VALUE'] else 'disabled'}", "Pixellari", 26)
+        note_3_text.set_pos(((window_width / 2) - (note_3_text.get_size()[0] / 2),
+                             (self.note_23_text.get_pos()[1] + note_3_text.get_size()[1] + 16)))
+        self.add_element("Note 3 Text", note_3_text)
+
+
 class GameOverlay(GUIScreen):
 
     def __init__(self):
@@ -471,32 +597,32 @@ class PauseOverlay(GUIScreen):
         play_text = Text("Back to game", "Pixellari", 26)
         play_button = Button(
             play_text,
-            (window_width / 2 + play_offset[0], window_height / 2 + play_offset[1]),
-            (328, 64)
+            (328, 64),
+            (window_width / 2 + play_offset[0], window_height / 2 + play_offset[1])
         )
         play_button.set_action(self.play_action)
 
         settings_text = Text("Settings", "Pixellari", 26)
         settings_button = Button(
             settings_text,
-            (window_width / 2 + settings_offset[0], window_height / 2 + settings_offset[1]),
-            (160, 64)
+            (160, 64),
+            (window_width / 2 + settings_offset[0], window_height / 2 + settings_offset[1])
         )
         settings_button.set_action(self.settings_action)
 
         credits_text = Text("Credits", "Pixellari", 26)
         credits_button = Button(
             credits_text,
-            (window_width / 2 + credits_offset[0], window_height / 2 + credits_offset[1]),
-            (160, 64)
+            (160, 64),
+            (window_width / 2 + credits_offset[0], window_height / 2 + credits_offset[1])
         )
         credits_button.set_action(self.credits_action)
 
         quit_text = Text("Quit to main menu", "Pixellari", 26)
         quit_button = Button(
             quit_text,
-            (window_width / 2 + quit_offset[0], window_height / 2 + quit_offset[1]),
-            (328, 64)
+            (328, 64),
+            (window_width / 2 + quit_offset[0], window_height / 2 + quit_offset[1])
         )
         quit_button.set_action(self.quit_action)
 
@@ -557,8 +683,8 @@ class GameOverOverlay(GUIScreen):
         play_text = Text("Play again" if not self.playerWon() else "Continue", "Pixellari", 26)
         play_button = Button(
             play_text,
-            (window_width / 2 + play_offset[0], window_height / 2 + play_offset[1]),
-            (328, 64)
+            (328, 64),
+            (window_width / 2 + play_offset[0], window_height / 2 + play_offset[1])
         )
         play_button.set_action(self.play_action)
 
@@ -566,8 +692,8 @@ class GameOverOverlay(GUIScreen):
         quit_button = Button(
             quit_text,
             #(window_width / 2 + quit_offset[0], window_height / 2 + quit_offset[1]),
-            (play_button.get_pos()[0], play_button.get_pos()[1] + play_button.get_size()[1] + 8),
-            (328, 64)
+            (328, 64),
+            (play_button.get_pos()[0], play_button.get_pos()[1] + play_button.get_size()[1] + 8)
         )
         quit_button.set_action(self.quit_action)
 
@@ -634,11 +760,14 @@ class MainMenu(GUIScreen):
         consts.LOGGER.info("VALHALLA", "Initializing new game")
 
     def play_action(self):
-        consts.LOGGER.debug("VALHALLA", "Play button pressed")
-        consts.current_screen = Screens.GAME
-        consts.LOGGER.info("VALHALLA", "Initializing new game")
-        consts.game = Game()
-        consts.start_time = pygame.time.get_ticks()
+        if not consts.SETTINGS["HUMAN_SOUNDS"]["SKIP_WARNING"]:
+            consts.current_screen = Screens.SOUND_WARNING
+        else:
+            consts.LOGGER.debug("VALHALLA", "Play button pressed")
+            consts.current_screen = Screens.GAME
+            consts.LOGGER.info("VALHALLA", "Initializing new game")
+            consts.game = Game()
+            consts.start_time = pygame.time.get_ticks()
 
     def settings_action(self):
         consts.LOGGER.debug("VALHALLA", "Settings button pressed")
@@ -674,45 +803,43 @@ class MainMenu(GUIScreen):
         attack_offset = (8, -32)
 
         logo_temp_text = Text("THE BEERZERKER", "Pixellari", 48, x=(window_width / 2) - 196, y=(window_height / 6))
-        logo_icon_img = util.Image("assets/textures/sprites/beer_bottle.png")
-        logo_icon = pygame.transform.scale(logo_icon_img.render(), (64, 64))
         continue_text = Text("Continue", "Pixellari", 26)
         self.continue_button = Button(
             continue_text,
-            (window_width / 2 + self.continue_offset[0], window_height / 2 + self.continue_offset[1]),
-            (328, 64)
+            (328, 64),
+            (window_width / 2 + self.continue_offset[0], window_height / 2 + self.continue_offset[1])
         )
         self.continue_button.set_action(self.continue_action)
 
         play_text = Text("Play", "Pixellari", 26)
         self.play_button = Button(
             play_text,
-            (window_width / 2 + self.play_offset[0], window_height / 2 + self.play_offset[1]),
-            (328, 64)
+            (328, 64),
+            (window_width / 2 + self.play_offset[0], window_height / 2 + self.play_offset[1])
         )
         self.play_button.set_action(self.play_action)
 
         settings_text = Text("Settings", "Pixellari", 26)
         self.settings_button = Button(
             settings_text,
-            (window_width / 2 + self.settings_offset[0], window_height / 2 + self.settings_offset[1]),
-            (160, 64)
+            (160, 64),
+            (window_width / 2 + self.settings_offset[0], window_height / 2 + self.settings_offset[1])
         )
         self.settings_button.set_action(self.settings_action)
 
         credits_text = Text("Credits", "Pixellari", 26)
         self.credits_button = Button(
             credits_text,
-            (window_width / 2 + self.credits_offset[0], window_height / 2 + self.credits_offset[1]),
-            (160, 64)
+            (160, 64),
+            (window_width / 2 + self.credits_offset[0], window_height / 2 + self.credits_offset[1])
         )
         self.credits_button.set_action(self.credits_action)
 
         quit_text = Text("Quit", "Pixellari", 26)
         self.quit_button = Button(
             quit_text,
-            (window_width / 2 + self.quit_offset[0], window_height / 2 + self.quit_offset[1]),
-            (328, 64)
+            (328, 64),
+            (window_width / 2 + self.quit_offset[0], window_height / 2 + self.quit_offset[1])
         )
         self.quit_button.set_action(self.quit_action)
 
@@ -734,7 +861,6 @@ class MainMenu(GUIScreen):
                            y=window_height + attack_offset[1])
 
         self.add_element("Logo", logo_temp_text)
-        self.add_element_position("Logo Icon", logo_icon, (logo_temp_text.get_pos()[0] + logo_temp_text.get_size()[0] - 8, logo_temp_text.get_pos()[1] - 16))
         self.add_element("Play", self.play_button)
         self.add_element("Settings", self.settings_button)
         self.add_element("Credits", self.credits_button)
@@ -765,31 +891,41 @@ class MainMenu(GUIScreen):
         continue_text = Text("Continue", "Pixellari", 26)
         self.continue_button = Button(
             continue_text,
-            (window_width / 2 + self.continue_offset[0], window_height / 2 + self.continue_offset[1]),
-            (328, 64)
+            (328, 64),
+            (window_width / 2 + self.continue_offset[0], window_height / 2 + self.continue_offset[1])
         )
         self.continue_button.set_action(self.continue_action)
 
         play_text = Text("Play" if consts.game is None else "New game", "Pixellari", 26)
-        self.play_button = Button(play_text,
-                                  (window_width / 2 + self.play_offset[0], window_height / 2 + self.play_offset[1]),
-                                  (328, 64))
+        self.play_button = Button(
+            play_text,
+            (328, 64),
+            (window_width / 2 + self.play_offset[0], window_height / 2 + self.play_offset[1])
+        )
         self.play_button.set_action(self.play_action)
 
         settings_text = Text("Settings", "Pixellari", 26)
-        self.settings_button = Button(settings_text, (
-            window_width / 2 + self.settings_offset[0], window_height / 2 + self.settings_offset[1]), (160, 64))
+        self.settings_button = Button(
+            settings_text,
+            (160, 64),
+            (window_width / 2 + self.settings_offset[0], window_height / 2 + self.settings_offset[1])
+        )
         self.settings_button.set_action(self.settings_action)
 
         credits_text = Text("Credits", "Pixellari", 26)
-        self.credits_button = Button(credits_text, (
-            window_width / 2 + self.credits_offset[0], window_height / 2 + self.credits_offset[1]), (160, 64))
+        self.credits_button = Button(
+            credits_text,
+            (160, 64),
+            (window_width / 2 + self.credits_offset[0], window_height / 2 + self.credits_offset[1])
+        )
         self.credits_button.set_action(self.credits_action)
 
         quit_text = Text("Quit", "Pixellari", 26)
-        self.quit_button = Button(quit_text,
-                                  (window_width / 2 + self.quit_offset[0], window_height / 2 + self.quit_offset[1]),
-                                  (328, 64))
+        self.quit_button = Button(
+            quit_text,
+            (328, 64),
+            (window_width / 2 + self.quit_offset[0], window_height / 2 + self.quit_offset[1])
+        )
         self.quit_button.set_action(self.quit_action)
 
         self.add_element("Play", self.play_button)
@@ -807,7 +943,11 @@ class SettingScreen(GUIScreen):
     def save_action(self):
         consts.LOGGER.debug("VALHALLA", "Save button pressed")
         consts.SETTINGS = {
-            "FULLSCREEN": self.fullscreen_checkbox.state
+            "FULLSCREEN": self.fullscreen_checkbox.state,
+            "HUMAN_SOUNDS": {
+                "VALUE": self.human_sound_checkbox.state,
+                "SKIP_WARNING": consts.SETTINGS["HUMAN_SOUNDS"]["SKIP_WARNING"]
+            }
         }
         util.save_to_settings_file()
         consts.current_screen = consts.last_screen
@@ -823,6 +963,16 @@ class SettingScreen(GUIScreen):
             (window_width / 6 + fullscreen_checkbox_offset[0], window_height / 3 + fullscreen_checkbox_offset[1]),
         )
         self.fullscreen_checkbox.state = consts.SETTINGS['FULLSCREEN']
+
+        human_sound_checkbox_offset = (0, 48)
+        human_sound_checkbox_text = Text("Enable Human Sounds", "Pixellari", 26)
+        self.human_sound_checkbox = Checkbox(
+            human_sound_checkbox_text,
+            (window_width / 6 + human_sound_checkbox_offset[0], window_height / 3 + human_sound_checkbox_offset[1]),
+        )
+
+        self.fullscreen_checkbox.state = consts.SETTINGS['FULLSCREEN']
+        self.human_sound_checkbox.state = consts.SETTINGS['HUMAN_SOUNDS']['VALUE']
 
         title_offset = (-42, 0)
 
@@ -842,16 +992,16 @@ class SettingScreen(GUIScreen):
         back_text = Text("Back", "Pixellari", 26)
         back_button = Button(
             back_text,
-            (window_width / 2 + back_offset[0], window_height / 2 + back_offset[1]),
-            (128, 64)
+            (128, 64),
+            (window_width / 2 + back_offset[0], window_height / 2 + back_offset[1])
         )
         back_button.set_action(self.back_action)
 
         save_text = Text("Save", "Pixellari", 26)
         save_button = Button(
             save_text,
-            (window_width / 2 + save_offset[0], window_height / 2 + save_offset[1]),
-            (128, 64)
+            (128, 64),
+            (window_width / 2 + save_offset[0], window_height / 2 + save_offset[1])
         )
         save_button.set_action(self.save_action)
 
@@ -862,7 +1012,8 @@ class SettingScreen(GUIScreen):
 
         self.add_element("Back button", back_button)
         self.add_element("Save button", save_button)
-        self.add_element("Checkbox test", self.fullscreen_checkbox)
+        self.add_element("Fullscreen", self.fullscreen_checkbox)
+        self.add_element("Human", self.human_sound_checkbox)
 
 
 class CreditScreen(GUIScreen):
@@ -881,39 +1032,81 @@ class CreditScreen(GUIScreen):
         credit_person_offset = ((window_width / 2), (window_width / 8) + 32)
 
         back_offset = (-64, 192)
-        screen_title = Text("Credits", "Pixellari", 26,
-                            x=(window_width / 2) + title_offset[0],
-                            y=(window_width / 12) + title_offset[1])
+        screen_title = Text("Credits", "Pixellari", 32)
+        screen_title.set_pos((screen_title.get_size()[0] / 2, screen_title.get_size()[1]))
 
-        lead_programmer_title = Text("Lead Programmer", "Pixellari", 26,
-                                     x=credit_title_offset[0],
-                                     y=credit_title_offset[1])
-        lead_programmer_credit = Text("Nathan Dow", "Pixellari", 26,
-                                      x=credit_person_offset[0] + (lead_programmer_title.get_pos()[0] / 2) - (128 + 90),
-                                      y=lead_programmer_title.get_pos()[1] + 32)
+        lead_programmer_title = Text(
+            "Lead Programmer",
+            "Pixellari",
+            30,
+            x=screen_title.get_pos()[0],
+            y=screen_title.get_pos()[1] + (screen_title.get_size()[1] * 2)
+        )
+        lead_programmer_credit = Text(
+            "Nathan Dow",
+            "Pixellari",
+            26,
+            x=lead_programmer_title.get_pos()[0],
+            y=lead_programmer_title.get_pos()[1] + lead_programmer_title.get_size()[1]
+        )
 
-        programmer_title = Text("Programmers", "Pixellari", 26,
-                                x=credit_title_offset[0] + 16,
-                                y=credit_title_offset[1] * 2)
-        programmer_credit = Text("Bartosz Swieszkowski", "Pixellari", 26,
-                                 x=credit_person_offset[0] + (programmer_title.get_pos()[0] / 2) - (256 + 32),
-                                 y=programmer_title.get_pos()[1] + 32)
+        programmer_title = Text(
+            "Programmers",
+            "Pixellari",
+            30,
+            x=screen_title.get_pos()[0],
+            y=lead_programmer_title.get_pos()[1] + lead_programmer_title.get_size()[1] + lead_programmer_credit.get_size()[1] * 2
+        )
+        programmer_credit = Text(
+            "Bartosz Swieszkowski",
+            "Pixellari",
+            26,
+            x=programmer_title.get_pos()[0],
+            y=programmer_title.get_pos()[1] + programmer_title.get_size()[1]
+        )
 
-        artist_title = Text("Artists", "Pixellari", 26,
-                            x=credit_title_offset[0] + 64,
-                            y=credit_title_offset[1] * 3)
-        artist_credit_1 = Text("Bartosz Swieszkowski", "Pixellari", 26,
-                               x=credit_person_offset[0] + (artist_title.get_pos()[0] / 2) - (256 + 56),
-                               y=artist_title.get_pos()[1] + 32)
-        artist_credit_2 = Text("Conner Hughes", "Pixellari", 26,
-                               x=credit_person_offset[0] + (artist_title.get_pos()[0] / 2 - (256 + 8)),
-                               y=artist_title.get_pos()[1] + 64)
+        artist_title = Text(
+            "Artists",
+            "Pixellari",
+            30,
+            x=screen_title.get_pos()[0],
+            y=programmer_title.get_pos()[1] + programmer_title.get_size()[1] + programmer_credit.get_size()[1] * 2
+        )
+        artist_credit_1 = Text(
+            "Bartosz Swieszkowski",
+            "Pixellari",
+            26,
+            x=artist_title.get_pos()[0],
+            y=artist_title.get_pos()[1] + artist_title.get_size()[1]
+        )
+        artist_credit_2 = Text(
+            "Conner Hughes",
+            "Pixellari",
+            26,
+            x=artist_title.get_pos()[0],
+            y=artist_credit_1.get_pos()[1] + artist_credit_1.get_size()[1]
+        )
+
+        audio_design_title = Text(
+            "Audio Design",
+            "Pixellari",
+            30,
+            x=screen_title.get_pos()[0],
+            y=artist_title.get_pos()[1] + (artist_credit_1.get_size()[1] * 4)
+        )
+        audio_design_credit = Text(
+            "Nathan Dow",
+            "Pixellari",
+            26,
+            x=audio_design_title.get_pos()[0],
+            y=audio_design_title.get_pos()[1] + audio_design_title.get_size()[1]
+        )
 
         back_text = Text("Back", "Pixellari", 26)
         back_button = Button(
             back_text,
-            (window_width / 2 + back_offset[0], window_height / 2 + back_offset[1]),
-            (128, 64)
+            (128, 64),
+            (screen_title.get_pos()[0], window_height / 2 + back_offset[1])
         )
         back_button.set_action(self.back_action)
 
@@ -928,5 +1121,8 @@ class CreditScreen(GUIScreen):
         self.add_element("Artist title", artist_title)
         self.add_element("Artist credit 1", artist_credit_1)
         self.add_element("Artist credit 2", artist_credit_2)
+
+        self.add_element("Audio design title", audio_design_title)
+        self.add_element("Audio design credit", audio_design_credit)
 
         self.add_element("Back button", back_button)

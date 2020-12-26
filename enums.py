@@ -14,6 +14,7 @@ class Screens(Enum):
     CREDITS = 2
     QUIT = 3
     GAME = 4
+    SOUND_WARNING = 5
 
 
 # Direction list

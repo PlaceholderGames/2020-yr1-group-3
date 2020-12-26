@@ -7,7 +7,7 @@ from util import Logger, Mouse
 
 running = True
 game = None
-version = "0.8.3"
+version = "0.9.0"
 
 current_screen = Screens.SPLASHSCREEN
 last_screen = Screens.SPLASHSCREEN
@@ -25,6 +25,10 @@ SETTINGS_TEMPLATE = {
     "RESOLUTION": {
         "WIDTH":  800,
         "HEIGHT":  600
+    },
+    "HUMAN_SOUNDS": {
+        "SKIP_WARNING": False,
+        "VALUE": True
     }
 }
 

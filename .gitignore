@@ -135,3 +135,4 @@ settings.json
 /output
 *.psd
 build-config.json
+assets/audio/sounds/audacity
