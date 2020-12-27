@@ -408,6 +408,7 @@ class Game:
 
     def __init__(self):
         self.player = Player()
+        consts.current_scene = Scenes.TUTORIAL
 
         self.scenes = [
             Scene(

@@ -112,6 +112,9 @@ class Logger:
     def log(self, log, component, message):
         self.time = datetime.datetime.now()
         date = {
+            "year": self.time.year,
+            "month": self.time.month,
+            "day": self.time.day,
             "hour": self.time.hour,
             "minute": self.time.minute,
             "second": self.time.second

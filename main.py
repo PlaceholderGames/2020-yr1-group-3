@@ -28,6 +28,7 @@ def main():
     else:
         consts.LOGGER.warning("Valhalla", "Settings file could not be found; Creating new settings file...")
         util.create_settings_file()
+        util.save_to_settings_file()
 
     # Checks if fullscreen setting is true;
     if consts.SETTINGS['FULLSCREEN']:

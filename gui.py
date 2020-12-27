@@ -404,19 +404,16 @@ class DisturbingSoundScreen(GUIScreen):
         consts.last_screen = Screens.SOUND_WARNING
         consts.current_screen = Screens.SETTINGS
 
+    def back_action(self):
+        consts.LOGGER.debug("VALHALLA", "Back button pressed")
+        consts.current_screen = Screens.MAIN_MENU
+
     def __init__(self):
         super().__init__()
 
         window_width, window_height = pygame.display.get_surface().get_size()
-        fullscreen_checkbox_offset = (0, 0)
 
         title_offset = (-42, 0)
-
-        note_text_offset = (-270, 0)
-        note_2_text_offset = (-360, 34)
-
-        save_offset = (-128, 192)
-        back_offset = (32, 192)
 
         screen_title = Text("WARNING!", "Pixellari", 32)
         screen_title.set_color((255,0,0))
@@ -445,18 +442,26 @@ class DisturbingSoundScreen(GUIScreen):
         save_text = Text("Continue", "Pixellari", 26)
         save_button = Button(
             save_text,
-            (save_text.get_size()[0] + 16, 64)
+            (128, 64)
         )
-        save_button.set_pos(((window_width / 2) - save_button.get_size()[0] - 16, window_height - save_button.get_size()[1] - 32))
+        save_button.set_pos(((window_width / 2) - save_button.get_size()[0] - 64, window_height - save_button.get_size()[1] - 32))
         save_button.set_action(self.continue_action)
 
         settings_text = Text("Settings", "Pixellari", 26)
         settings_button = Button(
             settings_text,
-            (settings_text.get_size()[0] + 16, 64),
+            (128, 64)
         )
         settings_button.set_pos((save_button.get_pos()[0] + save_button.get_size()[0] + 16, save_button.get_pos()[1]))
         settings_button.set_action(self.setting_action)
+
+        back_text = Text("Back", "Pixellari", 26)
+        back_button = Button(
+            back_text,
+            (128, 64)
+        )
+        back_button.set_pos((settings_button.get_pos()[0] + settings_button.get_size()[0] + 16, window_height - back_button.get_size()[1] - 32))
+        back_button.set_action(self.back_action)
 
         self.remember_warning_checkbox = Checkbox(remember_warning_checkbox_text)
         self.remember_warning_checkbox.set_pos(
@@ -476,7 +481,8 @@ class DisturbingSoundScreen(GUIScreen):
         self.add_element("Note 2.3 Text", self.note_23_text)
         # self.add_element("Note 22 Text", note_22_text)
 
-        self.add_element("Back button", settings_button)
+        self.add_element("Back button", back_button)
+        self.add_element("Settings button", settings_button)
         self.add_element("Save button", save_button)
         self.add_element("Skip warning checkbox", self.remember_warning_checkbox)
 
@@ -950,70 +956,68 @@ class SettingScreen(GUIScreen):
             }
         }
         util.save_to_settings_file()
-        consts.current_screen = consts.last_screen
+        self.showSavingText = 32
 
     def __init__(self):
         super().__init__()
 
+        self.showSavingText = 0
+
         window_width, window_height = pygame.display.get_surface().get_size()
-        fullscreen_checkbox_offset = (0, 0)
-        fullscreen_checkbox_text = Text("Fullscreen*", "Pixellari", 26)
-        self.fullscreen_checkbox = Checkbox(
-            fullscreen_checkbox_text,
-            (window_width / 6 + fullscreen_checkbox_offset[0], window_height / 3 + fullscreen_checkbox_offset[1]),
-        )
+
+        screen_title = Text("Settings", "Pixellari", 32)
+        screen_title.set_pos((screen_title.get_size()[0] / 2, screen_title.get_size()[1]))
+
+        note_text = Text("Settings marked with '*' require a game restart.", "Pixellari", 26)
+        note_text.set_pos((screen_title.get_pos()[0], screen_title.get_pos()[1] + screen_title.get_size()[1]))
+
+        self.fullscreen_checkbox = Checkbox(Text("Fullscreen*", "Pixellari", 26))
+        self.fullscreen_checkbox.set_pos((screen_title.get_pos()[0], note_text.get_pos()[1] + (note_text.get_size()[1] * 2)))
         self.fullscreen_checkbox.state = consts.SETTINGS['FULLSCREEN']
 
-        human_sound_checkbox_offset = (0, 48)
-        human_sound_checkbox_text = Text("Enable Human Sounds", "Pixellari", 26)
-        self.human_sound_checkbox = Checkbox(
-            human_sound_checkbox_text,
-            (window_width / 6 + human_sound_checkbox_offset[0], window_height / 3 + human_sound_checkbox_offset[1]),
-        )
-
-        self.fullscreen_checkbox.state = consts.SETTINGS['FULLSCREEN']
+        self.human_sound_checkbox = Checkbox(Text("Enable Human Sounds", "Pixellari", 26))
+        self.human_sound_checkbox.set_pos((self.fullscreen_checkbox.get_pos()[0], self.fullscreen_checkbox.get_pos()[1] + self.fullscreen_checkbox.get_size()[1] + 4))
         self.human_sound_checkbox.state = consts.SETTINGS['HUMAN_SOUNDS']['VALUE']
 
-        title_offset = (-42, 0)
-
-        note_text_offset = (-270, 0)
-        note_2_text_offset = (-360, 34)
-
-        back_offset = (-128, 192)
-        save_offset = (32, 192)
-
-        screen_title = Text("Settings", "Pixellari", 26, x=(window_width / 2) + title_offset[0],
-                            y=(window_width / 12) + title_offset[1])
-
-        note_text = Text("Settings marked with '*' require a game restart.", "Pixellari", 26,
-                         x=(window_width / 2) + note_text_offset[0],
-                         y=(window_width / 8) + note_text_offset[1])
-
-        back_text = Text("Back", "Pixellari", 26)
         back_button = Button(
-            back_text,
+            Text("Back", "Pixellari", 26),
             (128, 64),
-            (window_width / 2 + back_offset[0], window_height / 2 + back_offset[1])
+            (screen_title.get_pos()[0], window_height - (64 + 18))
         )
         back_button.set_action(self.back_action)
 
-        save_text = Text("Save", "Pixellari", 26)
         save_button = Button(
-            save_text,
+            Text("Save", "Pixellari", 26),
             (128, 64),
-            (window_width / 2 + save_offset[0], window_height / 2 + save_offset[1])
+            (back_button.get_pos()[0] + back_button.get_size()[0] + 16, window_height - (64 + 18))
         )
         save_button.set_action(self.save_action)
 
         self.add_element("Settings title", screen_title)
-
         self.add_element("Note Text", note_text)
-        # self.add_element("Note 2 Text", note_2_text)
+
+        self.add_element("Fullscreen", self.fullscreen_checkbox)
+        self.add_element("Human Sound", self.human_sound_checkbox)
 
         self.add_element("Back button", back_button)
         self.add_element("Save button", save_button)
-        self.add_element("Fullscreen", self.fullscreen_checkbox)
-        self.add_element("Human", self.human_sound_checkbox)
+
+    def render(self):
+        super(SettingScreen, self).render()
+
+        window_width, window_height = pygame.display.get_surface().get_size()
+        saving_text = Text("Settings saved to file", "Pixellari", 26)
+        saving_text.set_pos((window_width - (saving_text.get_size()[0] + 16),
+                             window_height - (saving_text.get_size()[1] + 18)))
+
+        if self.showSavingText > 0:
+            self.components["Saving text"] = saving_text
+            self.showSavingText -= 1
+
+        if self.showSavingText == 1:
+            self.showSavingText = 0
+            self.components.pop("Saving text")
+            consts.current_screen = consts.last_screen
 
 
 class CreditScreen(GUIScreen):
