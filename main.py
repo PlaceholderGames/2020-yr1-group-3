@@ -9,14 +9,15 @@ import util
 import datetime
 import ctypes
 
-from gui import MainMenu, SplashScreen, DebugOverlay, GameOverlay, CreditScreen, PauseOverlay, SettingScreen
+from gui import MainMenu, SplashScreen, DebugOverlay, GameOverlay, CreditScreen, PauseOverlay, SettingScreen, GameOverOverlay, DisturbingSoundScreen
 from enums import Screens
 
 def main():
 
     # Setup pygame
-    clock = pygame.time.Clock()
+    consts.clock = pygame.time.Clock()
     pygame.init()
+    pygame.mixer.init()
     pygame.font.init()
     consts.LOGGER.info("Pygame", "Pygame and its components have been initialized")
 
@@ -27,11 +28,12 @@ def main():
     else:
         consts.LOGGER.warning("Valhalla", "Settings file could not be found; Creating new settings file...")
         util.create_settings_file()
+        util.save_to_settings_file()
 
     # Checks if fullscreen setting is true;
     if consts.SETTINGS['FULLSCREEN']:
 
-        # Makes window fulllscreen to screen resolution if so
+        # Makes window fullscreen to screen resolution if so
         window = pygame.display.set_mode((ctypes.windll.user32.GetSystemMetrics(0), ctypes.windll.user32.GetSystemMetrics(1)), pygame.FULLSCREEN)
     else:
 
@@ -41,6 +43,7 @@ def main():
 
     # Creates window
     pygame.display.set_caption("The BeerZerker")
+    pygame.display.set_icon(util.Image("assets/textures/sprites/beer_bottle.png").render())
     consts.LOGGER.info("Pygame", "Created window")
 
     start_time = pygame.time.get_ticks()
@@ -52,8 +55,14 @@ def main():
     settings_screen = SettingScreen()
     credit_screen = CreditScreen()
     debug_overlay = DebugOverlay()
+    sound_warning_screen = DisturbingSoundScreen()
 
     while consts.running:
+        if consts.game is not None:
+            game_result = GameOverOverlay()
+            game_overlay = GameOverlay()
+            game_pause = PauseOverlay()
+
         # Probably unneccessary to have a Mouse constant, just use pygame.mouse
         consts.MOUSE.update(pygame.mouse.get_pos())
         consts.LOGGER.launch_time = datetime.datetime.now()
@@ -97,24 +106,32 @@ def main():
         elif consts.current_screen == Screens.GAME:
 
             # Initialize game overlays
-            game_overlay = GameOverlay()
-            game_pause = PauseOverlay()
 
             # Check if game has ended
             if consts.game.is_game_over():
 
                 # Determine if you have won or lost
-                if consts.game.get_enemies() == 0:
-                    consts.LOGGER.info("VALHALLA", "You won!")
-                else:
-                    consts.LOGGER.info("VALHALLA", "You lost!")
+                # if consts.game.scenes[consts.current_scene].remaining_enemies() == 0:
+                #     consts.LOGGER.info("VALHALLA", "You won!")
+                #
+                # else:
+                #     consts.LOGGER.info("VALHALLA", "You lost!")
 
-                consts.current_screen = Screens.MAIN_MENU
-                consts.game = None
+                consts.game.render()
+                game_result.handle_mouse_event()
+                game_result.render()
+
+                # consts.current_screen = Screens.MAIN_MENU
+                # consts.game = None
             else:
 
                 # Render game whilst the game hasn't ended
                 consts.game.render()
+
+                if consts.SETTINGS['DEBUG_OVERLAY']:
+                    debug_overlay.render()
+                else:
+                    game_overlay.render()
 
                 if not consts.game.paused:
                     consts.game.update()
@@ -122,16 +139,16 @@ def main():
                     game_pause.handle_mouse_event()
                     game_pause.render()
 
-                if consts.SETTINGS['DEBUG_OVERLAY']:
-                    debug_overlay.render()
-                else:
-                    game_overlay.render()
-
         # Quit game if player screen reaches Screens.QUIT
         #
         elif consts.current_screen == Screens.QUIT:
-            consts.LOGGER.info("VALHALLA", "QUIT Screen recognised. Quitting game...")
-            util.quit_game()
+            if not pygame.mixer.get_busy():
+                consts.LOGGER.info("VALHALLA", "QUIT Screen recognised. Quitting game...")
+                util.quit_game()
+
+        elif consts.current_screen == Screens.SOUND_WARNING:
+            sound_warning_screen.render()
+            sound_warning_screen.handle_mouse_event()
 
         # Show debug overlay
         if consts.SETTINGS['DEBUG_OVERLAY']:
@@ -170,7 +187,7 @@ def main():
         pygame.display.update()
 
         # Limit framerate to 120fps - Should we remove?
-        clock.tick(120)
+        consts.clock.tick()
 
 
 #try:

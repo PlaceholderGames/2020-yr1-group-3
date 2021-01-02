@@ -22,6 +22,65 @@ logo = [
 ]
 
 
+class Image:
+    def __init__(self, img_path, position=(0, 0), transparency=True):
+        import pygame
+        self.img = pygame.image.load(img_path)
+        self.pos = position
+        self.area = (self.pos[0], self.pos[1], 32, 32)
+        if transparency:
+            self.img.set_colorkey(self.img.get_at((0, 0)), pygame.RLEACCEL)
+
+    def render(self):
+        return self.img.convert_alpha()
+
+    def get_pos(self):
+        return self.pos
+
+    def set_pos(self, pos):
+        self.pos = pos
+
+
+# Code taken from pygame wiki
+# https://www.pygame.org/wiki/Spritesheet
+#
+# Originally taken from www.scriptefun.com/transcript-2-using-sprite-sheets-and-drawing-the-background
+# and adjusted but website is no longer active
+class Spritesheet:
+    def __init__(self, filename):
+        import pygame
+        try:
+            self.sheet = pygame.image.load(filename)
+        except pygame.error as message:
+            consts.LOGGER.error("Valhalla", f"Unable to load image as a spritesheet: {filename}")
+
+    # Load a specific image from a specific rectangle
+    def image_at(self, rectangle, colorkey=None):
+        import pygame
+        "Loads image from x,y,x+offset,y+offset"
+        rect = pygame.Rect(rectangle)
+        image = pygame.Surface(rect.size)
+        image.blit(self.sheet, (0, 0), rect)
+        if colorkey is not None:
+            if colorkey == -1:
+                image.set_colorkey(image.get_at((0, 0)), pygame.RLEACCEL)
+            else:
+                image.set_colorkey(colorkey, pygame.RLEACCEL)
+        return image.convert_alpha()
+
+    # Load a whole bunch of images and return them as a list
+    def images_at(self, rects, colorkey=None):
+        "Loads multiple images, supply a list of coordinates"
+        return [self.image_at(rect, colorkey) for rect in rects]
+
+    # Load a whole strip of images
+    def load_strip(self, rect, image_count, colorkey=None):
+        "Loads a strip of images and returns them as a list"
+        tups = [(rect[0] + rect[2] * x, rect[1], rect[2], rect[3])
+                for x in range(image_count)]
+        return self.images_at(tups, colorkey)
+
+
 # Mouse class
 # Simply used for mouse position
 # Will probably be removed in future.
@@ -61,13 +120,11 @@ class Logger:
             "second": self.time.second
         }
         self.date = date
-        month = f"0{date['month']}" if date['month'] < 10 else str(date['month'])
-        day = f"0{date['day']}" if date['day'] < 10 else str(date['day'])
         hour = f"0{date['hour']}" if date['hour'] < 10 else str(date['hour'])
         minute = f"0{date['minute']}" if date['minute'] < 10 else str(date['minute'])
         second = f"0{date['second']}" if date['second'] < 10 else str(date['second'])
 
-        line = f"[{day}/{month}/{date['year']} {hour}:{minute}:{second}][{log.upper()}][{component.upper()}]: {message}"
+        line = f"[{hour}:{minute}:{second}][{log.upper()}][{component.upper()}]: {message}"
         self.file.write(line + "\n")
         print(line)
 
@@ -121,6 +178,7 @@ def quit_game():
 def constrain(value, low, high):
     return max(min(value, high), low)
 
+
 # Remaps a number from one range to another
 #
 # Taken from p5.js and modified to fit python
@@ -137,6 +195,10 @@ def bind(value, currentStart, currentStop, targetStart, targetStop, withinBounds
         return constrain(new_value, targetStop, targetStart)
 
 
+def lerp(start, stop, amount):
+    return amount * (stop - start) + start
+
+
 # Creates a settings file and uses
 # settings template to initialize values
 def create_settings_file():
@@ -147,10 +209,17 @@ def create_settings_file():
     consts.LOGGER.info("Valhalla", "Saving settings to file")
 
 
+def fix_settings():
+    for template_key in consts.SETTINGS_TEMPLATE:
+        if template_key not in consts.SETTINGS:
+            consts.SETTINGS[template_key] = consts.SETTINGS_TEMPLATE[template_key]
+
+
 # Saves any value in settings constant
 # to settings file
 def save_to_settings_file():
     with open("settings.json", "w") as file:
+        fix_settings()
         json.dump(consts.SETTINGS, file)
     file.close()
 
@@ -174,14 +243,16 @@ def load_settings_file():
     except IOError as e:
         consts.LOGGER.error("Valhalla", f"An error occurred: {e}")
     finally:
-        for template_key in consts.SETTINGS_TEMPLATE:
-            if template_key not in consts.SETTINGS:
-                consts.SETTINGS[template_key] = consts.SETTINGS_TEMPLATE[template_key]
-                save_to_settings_file()
+        import platform
+        fix_settings()
+        save_to_settings_file()
 
         # Checks if gane resolution is more than the current window resolution
         # if so, set the resolution size to the window resolution
-        if consts.SETTINGS['RESOLUTION']['WIDTH'] > ctypes.windll.user32.GetSystemMetrics(0):
-            consts.SETTINGS['RESOLUTION']['WIDTH'] = ctypes.windll.user32.GetSystemMetrics(0)
-        if consts.SETTINGS['RESOLUTION']['HEIGHT'] > ctypes.windll.user32.GetSystemMetrics(1):
-            consts.SETTINGS['RESOLUTION']['HEIGHT'] = ctypes.windll.user32.GetSystemMetrics(1)
+        #
+        # NOTE: Only performs on Windows
+        if platform.system() == 'Windows':
+            if consts.SETTINGS['RESOLUTION']['WIDTH'] > ctypes.windll.user32.GetSystemMetrics(0):
+                consts.SETTINGS['RESOLUTION']['WIDTH'] = ctypes.windll.user32.GetSystemMetrics(0)
+            if consts.SETTINGS['RESOLUTION']['HEIGHT'] > ctypes.windll.user32.GetSystemMetrics(1):
+                consts.SETTINGS['RESOLUTION']['HEIGHT'] = ctypes.windll.user32.GetSystemMetrics(1)

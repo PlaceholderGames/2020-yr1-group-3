@@ -14,6 +14,7 @@ class Screens(Enum):
     CREDITS = 2
     QUIT = 3
     GAME = 4
+    SOUND_WARNING = 5
 
 
 # Direction list
@@ -28,3 +29,10 @@ class Direction(Enum):
     UP_RIGHT = 6
     DOWN_LEFT = 7
     DOWN_RIGHT = 8
+
+# Scene list
+# All scenes in game
+# Needed for portals
+class Scenes(Enum):
+    TUTORIAL = 0
+    LEVEL_1 = 1

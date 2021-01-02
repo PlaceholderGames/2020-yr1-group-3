@@ -132,3 +132,7 @@ dmypy.json
 # Valhalla engine
 settings.json
 /logs
+/output
+*.psd
+build-config.json
+assets/audio/sounds/audacity
