@@ -7,9 +7,11 @@ import consts
 import os
 import util
 import datetime
+import platform
 import ctypes
 
-from gui import MainMenu, SplashScreen, DebugOverlay, GameOverlay, CreditScreen, PauseOverlay, SettingScreen, GameOverOverlay, DisturbingSoundScreen
+from gui import MainMenu, SplashScreen, DebugOverlay, GameOverlay, CreditScreen, PauseOverlay, SettingScreen, \
+    GameOverOverlay, DisturbingSoundScreen
 from enums import Screens
 
 def main():
@@ -30,11 +32,22 @@ def main():
         util.create_settings_file()
         util.save_to_settings_file()
 
-    # Checks if fullscreen setting is true;
-    if consts.SETTINGS['FULLSCREEN']:
+    if platform.system() == 'Linux':
+        displays = os.popen('xrandr | grep " connected primary"').read()
+        displays_str = str(displays)
+        resolution = displays_str.split(" ")[3][:-4]
+        resolution_tuple = tuple(int(res) for res in resolution.split('x'))
+    elif platform.system("Windows"):
+        resolution_tuple = (ctypes.windll.user32.GetSystemMetrics(0), ctypes.windll.user32.GetSystemMetrics(1))
 
+
+    # Checks if fullscreen setting is true
+    if consts.SETTINGS['FULLSCREEN']:
         # Makes window fullscreen to screen resolution if so
-        window = pygame.display.set_mode((ctypes.windll.user32.GetSystemMetrics(0), ctypes.windll.user32.GetSystemMetrics(1)), pygame.FULLSCREEN)
+        # Windows
+        window = pygame.display.set_mode(resolution_tuple, pygame.FULLSCREEN)
+
+        # linux
     else:
 
         # Makes window to specified screen resolution in settings file
@@ -78,7 +91,7 @@ def main():
         # Render splashscreen
         #
         if consts.current_screen == Screens.SPLASHSCREEN:
-            if pygame.time.get_ticks() < start_time + 3000:
+            if not splash_screen.loaded():
                 splash_screen.render()
             else:
                 consts.current_screen = Screens.MAIN_MENU
@@ -110,19 +123,9 @@ def main():
             # Check if game has ended
             if consts.game.is_game_over():
 
-                # Determine if you have won or lost
-                # if consts.game.scenes[consts.current_scene].remaining_enemies() == 0:
-                #     consts.LOGGER.info("VALHALLA", "You won!")
-                #
-                # else:
-                #     consts.LOGGER.info("VALHALLA", "You lost!")
-
                 consts.game.render()
                 game_result.handle_mouse_event()
                 game_result.render()
-
-                # consts.current_screen = Screens.MAIN_MENU
-                # consts.game = None
             else:
 
                 # Render game whilst the game hasn't ended
@@ -172,8 +175,8 @@ def main():
                         # Pause/unpause the game if escape button is pressed
                         if event.key == pygame.K_ESCAPE:
                             consts.game.pause(not consts.game.paused)
-                            #pygame.mouse.set_visible(consts.game.paused)
-                            #pygame.mouse.set_pos(int(window.get_size()[0] / 2), int(window.get_size()[1] / 2))
+                            # pygame.mouse.set_visible(consts.game.paused)
+                            # pygame.mouse.set_pos(int(window.get_size()[0] / 2), int(window.get_size()[1] / 2))
 
                 # If window "x" button pressed, close the game
                 if event.type == pygame.QUIT:
@@ -190,7 +193,26 @@ def main():
         consts.clock.tick()
 
 
-#try:
-main()
-#except Exception as e:
-#   consts.LOGGER.error("VALHALLA", e)
+try:
+    main()
+except util.ValhallaException as e:
+    consts.LOGGER.write_message("")
+    consts.LOGGER.write_message("=======================================================================")
+    consts.LOGGER.write_message("To report this bug, please give this log to the developers")
+    consts.LOGGER.write_message("")
+    traces = []
+    tb = e.__traceback__
+    while tb is not None:
+        traces.append({
+            "filename": tb.tb_frame.f_code.co_filename,
+            "name": tb.tb_frame.f_code.co_name,
+            "lineno": tb.tb_lineno
+        })
+        tb = tb.tb_next
+
+    for trace in traces:
+        file_dir = trace['filename'].split('/')
+        traceStr = f"File {file_dir[len(file_dir) - 1]}:{trace['lineno']} in {trace['name']}"
+        consts.LOGGER.error("VALHALLA", traceStr)
+    consts.LOGGER.error("VALHALLA", e)
+    consts.LOGGER.stop()

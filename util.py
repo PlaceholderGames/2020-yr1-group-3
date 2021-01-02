@@ -37,6 +37,9 @@ class Image:
     def get_pos(self):
         return self.pos
 
+    def get_size(self):
+        return self.img.get_size()
+
     def set_pos(self, pos):
         self.pos = pos
 
@@ -108,6 +111,11 @@ class Logger:
             print(line[:-1])
         self.date = {}
 
+    # Write log message to file and console - No logger decorations
+    def write_message(self, message):
+        self.file.write(message + "\n")
+        print(message)
+
     # Write log message to file and console based on log type and component
     def log(self, log, component, message):
         self.time = datetime.datetime.now()
@@ -125,8 +133,7 @@ class Logger:
         second = f"0{date['second']}" if date['second'] < 10 else str(date['second'])
 
         line = f"[{hour}:{minute}:{second}][{log.upper()}][{component.upper()}]: {message}"
-        self.file.write(line + "\n")
-        print(line)
+        self.write_message(line)  # self.file.write(line + "\n")
 
     # Simply logs to file/console as debug
     def debug(self, component, message):
@@ -256,3 +263,19 @@ def load_settings_file():
                 consts.SETTINGS['RESOLUTION']['WIDTH'] = ctypes.windll.user32.GetSystemMetrics(0)
             if consts.SETTINGS['RESOLUTION']['HEIGHT'] > ctypes.windll.user32.GetSystemMetrics(1):
                 consts.SETTINGS['RESOLUTION']['HEIGHT'] = ctypes.windll.user32.GetSystemMetrics(1)
+        elif platform.system() == 'Linux':
+            displays = os.popen('xrandr | grep " connected primary"').read()
+            displays_str = str(displays)
+            resolution = displays_str.split(" ")[3][:-4]
+            resolution_tuple = tuple(int(res) for res in resolution.split('x'))
+
+            if consts.SETTINGS['RESOLUTION']['WIDTH'] >= resolution_tuple[0]:
+                consts.SETTINGS['RESOLUTION']['WIDTH'] = resolution_tuple[0]
+            if consts.SETTINGS['RESOLUTION']['HEIGHT'] > resolution_tuple[1]:
+                consts.SETTINGS['RESOLUTION']['HEIGHT'] = resolution_tuple[1]
+
+        save_to_settings_file()
+
+
+class ValhallaException(Exception):
+    pass
