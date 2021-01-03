@@ -120,8 +120,10 @@ class Link:
         self.text = text
 
     def on_hover(self):
-        mouseover_x = self.text.get_pos()[0] < consts.MOUSE.get_pos()[0] < self.text.get_pos()[0] + self.text.get_size()[0]
-        mouseover_y = self.text.get_pos()[1] < consts.MOUSE.get_pos()[1] < self.text.get_pos()[1] + self.text.get_size()[1]
+        mouseover_x = self.text.get_pos()[0] < consts.MOUSE.get_pos()[0] < self.text.get_pos()[0] + \
+                      self.text.get_size()[0]
+        mouseover_y = self.text.get_pos()[1] < consts.MOUSE.get_pos()[1] < self.text.get_pos()[1] + \
+                      self.text.get_size()[1]
         return mouseover_x and mouseover_y
 
     def click(self):
@@ -129,7 +131,8 @@ class Link:
 
     def render(self):
         if self.on_hover():
-            pygame.draw.rect(pygame.display.get_surface(), self.text.colour, (self.text.get_pos()[0], self.text.get_pos()[1] + self.text.get_size()[1] - 2, self.text.get_size()[0], 2))
+            pygame.draw.rect(pygame.display.get_surface(), self.text.colour, (
+            self.text.get_pos()[0], self.text.get_pos()[1] + self.text.get_size()[1] - 2, self.text.get_size()[0], 2))
         return self.text.render()
 
     def get_font(self):
@@ -323,7 +326,6 @@ class GUIScreen(pygame.Surface):
                     if link.on_hover():
                         pygame.mixer.Sound("assets/audio/sounds/gui/button_click.ogg").play()
                         link.click()
-
 
     def render(self):
         for component in self.components:
@@ -605,7 +607,9 @@ class GameOverlay(GUIScreen):
         bottle_count = Text(f"x{len(consts.game.get_player().get_items_by_type(Bottle))}", "Pixellari", 16,
                             x=bottle_img.get_pos()[0] + 16, y=bottle_img.get_pos()[1])
 
-        background = pygame.Surface((160, 96))
+        score_text = Text(f"Score: {consts.score}", "Pixellari", 24, x=bottle_img.get_pos()[0] + 4, y=bottle_img.get_pos()[1] + bottle_img.get_size()[1] + 6)
+
+        background = pygame.Surface((160, 128))
         background.set_alpha(127)
         background.fill(0)
 
@@ -614,6 +618,7 @@ class GameOverlay(GUIScreen):
         self.add_element_position("Beers", beer_element, beer_pos)
         self.add_element("Bottle img", bottle_img)
         self.add_element("Bottle count", bottle_count)
+        self.add_element("Score", score_text)
 
     def render(self):
         super(GameOverlay, self).render()
@@ -705,12 +710,20 @@ class GameOverOverlay(GUIScreen):
         consts.LOGGER.debug("VALHALLA", "Going back to game")
         if self.playerWon():
             consts.game.paused = False
-            consts.game.scenes[consts.current_scene].entities["ENEMY"].append(1)
+            consts.game.scenes[consts.current_scene].entities["ENEMIES"].append(1)
             consts.game.game_over = False
         else:
+            with open("data/score.dat", "w") as file:
+                if consts.score >= consts.high_score:
+                    file.write(str(consts.score))
+            file.close()
             consts.game = Game()
 
     def quit_action(self):
+        with open("data/score.dat", "w") as file:
+            if consts.score >= consts.high_score:
+                file.write(str(consts.score))
+        file.close()
         consts.current_screen = Screens.MAIN_MENU
         consts.game.paused = False
 
@@ -809,8 +822,9 @@ class SplashScreen(GUIScreen):
             (window_height / 2 + usw_logo_height / 2) + (usw_text_height / 2) + caption_text_height + 16))
 
         self.loadedPercent_text = Text("0%", "Pixellari", 24)
-        self.loadedPercent_text.set_pos((self.usw_text.get_pos()[0] + (self.usw_text.get_size()[0] / 2) - (self.loadedPercent_text.get_size()[0] / 2), self.usw_text.get_pos()[1] + 28))
-        self.loadedPercent_text.set_color((0,0,0))
+        self.loadedPercent_text.set_pos((self.usw_text.get_pos()[0] + (self.usw_text.get_size()[0] / 2) - (
+                    self.loadedPercent_text.get_size()[0] / 2), self.usw_text.get_pos()[1] + 28))
+        self.loadedPercent_text.set_color((0, 0, 0))
 
         self.add_element("Caption", caption_text)
         self.add_element("USW", self.usw_text)
@@ -826,13 +840,14 @@ class SplashScreen(GUIScreen):
         loading_bar.fill((255, 255, 255))
 
         loaded_bar = pygame.Surface((loaded_width, 32 - (loading_bar_thickness * 2)))
-        loaded_bar.fill((255,0,0))
+        loaded_bar.fill((255, 0, 0))
 
         self.loadedPercent_text.set_pos((loadingbar_pos[0] + (loading_bar.get_size()[0] / 2) - (
-                    self.loadedPercent_text.get_size()[0] / 2), loadingbar_pos[1] + (32 / 2) - (
-                                                     self.loadedPercent_text.get_size()[1] / 2) + 2))
+                self.loadedPercent_text.get_size()[0] / 2), loadingbar_pos[1] + (32 / 2) - (
+                                                 self.loadedPercent_text.get_size()[1] / 2) + 2))
         pygame.display.get_surface().blit(loading_bar, (loadingbar_pos[0], loadingbar_pos[1]))
-        pygame.display.get_surface().blit(loaded_bar, (loadingbar_pos[0] + loading_bar_thickness, loadingbar_pos[1] + loading_bar_thickness))
+        pygame.display.get_surface().blit(loaded_bar, (
+        loadingbar_pos[0] + loading_bar_thickness, loadingbar_pos[1] + loading_bar_thickness))
         pygame.display.get_surface().blit(self.loadedPercent_text.render(), self.loadedPercent_text.get_pos())
         if self.loading <= 100:
             self.loadedPercent_text.set_text(f"{self.loading}%")
@@ -934,7 +949,6 @@ class MainMenu(GUIScreen):
         )
         self.quit_button.set_action(self.quit_action)
 
-
         version_text = Text(f"Version {consts.version}", "Pixellari", 26)
         version_text.set_pos(
             (
@@ -942,6 +956,17 @@ class MainMenu(GUIScreen):
                 pygame.display.get_surface().get_size()[1] - version_text.get_size()[1] - 8
             )
         )
+
+        formatted_score = f"{consts.high_score:,.1e}"
+        score_text_str = formatted_score if consts.high_score >= 1000000000 else f"{consts.high_score:,}"
+        score_text = Text(f"Highest score: {score_text_str}", "Pixellari", 26)
+        score_text.set_pos(
+            (
+                pygame.display.get_surface().get_size()[0] - score_text.get_size()[0] - 4,
+                pygame.display.get_surface().get_size()[1] - score_text.get_size()[1] - version_text.get_size()[1] - 8
+            )
+        )
+
         version_text_link = Link(version_text, "https://github.com/PlaceholderGames/2020-yr1-group-3/releases/latest")
 
         controls_title_text = Text("Controls:", "Pixellari", 26, x=controls_title_offset[0],
@@ -959,6 +984,7 @@ class MainMenu(GUIScreen):
         self.add_element("Credits", self.credits_button)
         self.add_element("Quit", self.quit_button)
 
+        self.add_element("High Score", score_text)
         self.add_element("Version", version_text_link)
         self.add_element("Controls text", controls_title_text)
         self.add_element("Move controls text", move_text)
@@ -1125,6 +1151,10 @@ class CreditScreen(GUIScreen):
         screen_title = Text("Credits", "Pixellari", 32)
         screen_title.set_pos((screen_title.get_size()[0] / 2, screen_title.get_size()[1]))
 
+        bitheral_link = "https://bitheral.net"
+        bartosz_link = "https://github.com/BartoszTrylockSW"
+        connor_link = "https://github.com/SirJinxy"
+
         lead_programmer_title = Text(
             "Lead Programmer",
             "Pixellari",
@@ -1138,7 +1168,7 @@ class CreditScreen(GUIScreen):
             26,
             x=lead_programmer_title.get_pos()[0],
             y=lead_programmer_title.get_pos()[1] + lead_programmer_title.get_size()[1]
-        ), "https://github.com/Bitheral")
+        ), bitheral_link)
 
         programmer_title = Text(
             "Programmers",
@@ -1148,13 +1178,13 @@ class CreditScreen(GUIScreen):
             y=lead_programmer_title.get_pos()[1] + lead_programmer_title.get_size()[1] +
               lead_programmer_credit.get_size()[1] * 2
         )
-        programmer_credit = Text(
+        programmer_credit = Link(Text(
             "Bartosz Swieszkowski",
             "Pixellari",
             26,
             x=programmer_title.get_pos()[0],
             y=programmer_title.get_pos()[1] + programmer_title.get_size()[1]
-        )
+        ), bartosz_link)
 
         artist_title = Text(
             "Artists",
@@ -1163,20 +1193,20 @@ class CreditScreen(GUIScreen):
             x=screen_title.get_pos()[0],
             y=programmer_title.get_pos()[1] + programmer_title.get_size()[1] + programmer_credit.get_size()[1] * 2
         )
-        artist_credit_1 = Text(
+        artist_credit_1 = Link(Text(
             "Bartosz Swieszkowski",
             "Pixellari",
             26,
             x=artist_title.get_pos()[0],
             y=artist_title.get_pos()[1] + artist_title.get_size()[1]
-        )
-        artist_credit_2 = Text(
+        ), bartosz_link)
+        artist_credit_2 = Link(Text(
             "Conner Hughes",
             "Pixellari",
             26,
             x=artist_title.get_pos()[0],
-            y=artist_credit_1.get_pos()[1] + artist_credit_1.get_size()[1]
-        )
+            y=artist_credit_1.get_pos()[1] + artist_credit_1.get_size()[1] + 4
+        ), connor_link)
 
         audio_design_title = Text(
             "Audio Design",
@@ -1191,7 +1221,7 @@ class CreditScreen(GUIScreen):
             26,
             x=audio_design_title.get_pos()[0],
             y=audio_design_title.get_pos()[1] + audio_design_title.get_size()[1]
-        ), "https://github.com/Bitheral")
+        ), bitheral_link)
 
         back_text = Text("Back", "Pixellari", 26)
         back_button = Button(

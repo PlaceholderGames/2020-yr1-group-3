@@ -32,6 +32,21 @@ def main():
         util.create_settings_file()
         util.save_to_settings_file()
 
+
+    # Check for data files
+    if os.path.exists("data"):
+        if os.path.exists("data/score.dat"):
+            consts.LOGGER.info("Valhalla", "Score exists;")
+            with open("data/score.dat", "r") as file:
+                score = file.readline()
+                if score == "":
+                    consts.high_score = 0
+                else:
+                    consts.high_score = int(score)
+            file.close()
+    else:
+        os.mkdir("data")
+
     if platform.system() == 'Linux':
         displays = os.popen('xrandr | grep " connected primary"').read()
         displays_str = str(displays)
