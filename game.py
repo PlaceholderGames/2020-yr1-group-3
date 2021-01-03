@@ -23,6 +23,7 @@ class Entity(object):
         self.rect = pygame.rect.Rect((self.screen.get_size()[0] / 2, self.screen.get_size()[1] / 2, 32, 32))
         self.rect_colour = (255, 255, 255)
         self.speed = 1.4
+        self.texture = None
 
     def get_health(self):
         return self.health
@@ -34,10 +35,13 @@ class Entity(object):
         self.health += healing
 
     def draw(self):
-        pygame.draw.rect(self.screen, self.rect_colour, self.rect)
+        if self.texture is None:
+            pygame.draw.rect(self.screen, self.rect_colour, self.rect)
+        else:
+            self.screen.blit(self.texture, (self.rect.x, self.rect.y))
 
     def update(self):
-        self.clock.tick(120)
+        # self.clock.tick(120)
         if self.rect.x <= 0:
             self.rect.x = 0
         if self.rect.y <= 0:
@@ -64,6 +68,7 @@ class Player(Entity):
         super().__init__()
         self.items = []
         self.attacking = 0
+        self.position = (self.rect.x, self.rect.y)
         self.atkr = pygame.rect.Rect((self.screen.get_size()[0] / 2, self.screen.get_size()[1] / 2, 16, 32))
         self.facing_direction = Direction.RIGHT
         self.attack_direction = Direction.RIGHT
@@ -71,6 +76,12 @@ class Player(Entity):
         self.speed = 1.6
         self.rect_colour = (81, 81, 81)
         self.sprinting = False
+
+        self.texture = pygame.Surface((32, 32), pygame.SRCALPHA)
+        upper_body = pygame.transform.scale(Spritesheet("assets/textures/sprites/player.png").image_at((0,0, 32, 32), -1), (15, 15))
+        lower_body = pygame.transform.scale(Spritesheet("assets/textures/sprites/player.png").image_at((0, 32, 32, 32), -1), (15, 15))
+        self.texture.blit(upper_body, (0, 0))
+        self.texture.blit(lower_body, (0, 15))
 
     def handle_keys(self):
         key = pygame.key.get_pressed()
@@ -102,7 +113,8 @@ class Player(Entity):
     def draw(self):
         super(Player, self).draw()
         if self.attacking != 0:
-            pygame.draw.rect(self.screen, (56, 56, 56), self.atkr)
+            self.screen.blit(pygame.transform.rotate(Spritesheet("assets/textures/spritesheets/items.png").image_at((64, 0, 32, 32), -1), self.facing_direction.value), (self.atkr.x, self.atkr.y))
+            # pygame.draw.rect(self.screen, (56, 56, 56), self.atkr)
 
     def update(self):
         super(Player, self).update()
@@ -169,6 +181,9 @@ class Enemy(Entity):
         self.rect_colour = (255, 0, 0)
         self.speed = 1
         self.hurting = 0
+
+        randomId = int(round(random()))
+        self.texture = pygame.transform.scale(Spritesheet("assets/textures/spritesheets/guards.png").image_at(((randomId) * 32, 0, 32, 32), -1), (32, 32))
 
     def follow(self, player):
         # Find direction vector (dx, dy) between enemy and player.
@@ -364,6 +379,9 @@ class SceneTXM(object):
         }
         self.portals = []
 
+        self.item_length = 0
+        self.enemy_length = 0
+
         scaled_x = pygame.display.get_surface().get_size()[0] / self.size[0]
         scaled_y = pygame.display.get_surface().get_size()[1] / self.size[1]
 
@@ -374,8 +392,10 @@ class SceneTXM(object):
                 self.collides.append(building)
             elif tile_object.type == 'bottle':
                 self.entities["ITEMS"].append(Bottle(tile_object.x * scaled_x, tile_object.y * scaled_y))
+                self.item_length += 1
             elif tile_object.type == 'enemy':
                 self.entities["ENEMIES"].append(Enemy(tile_object.x * scaled_x, tile_object.y * scaled_y))
+                self.enemy_length += 1
             elif tile_object.type == 'interior':
                 building = Collidable((tile_object.x * scaled_x, tile_object.y * scaled_y, tile_object.width * scaled_x,
                                        tile_object.height * scaled_y), True, False)
@@ -421,7 +441,8 @@ class SceneTXM(object):
             item.draw()
 
         for enemy in self.entities["ENEMIES"]:
-            enemy.draw()
+            if isinstance(enemy, Enemy):
+                enemy.draw()
 
     def remaining_enemies(self):
         return len(self.get_entities_by_type("ENEMIES"))
@@ -509,7 +530,9 @@ class Game:
 
         currentScene.update(self.player)
 
-        if self.player.health <= 0 or currentScene.remaining_enemies() == 0 or self.player.drunkenness <= 9:
+        consts.score = int((self.player.health + self.player.drunkenness) + ((currentScene.enemy_length - currentScene.remaining_enemies()) * 2))
+
+        if self.player.health <= 0 or currentScene.remaining_enemies() == 0 or self.player.drunkenness < 9:
             self.game_over = True
             consts.LOGGER.info("VALHALLA", "Game over! Going back to MAIN_MENU")
 
