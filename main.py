@@ -227,26 +227,29 @@ def main():
         consts.clock.tick()
 
 
-try:
-    main()
-except util.ValhallaException as e:
-    consts.LOGGER.write_message("")
-    consts.LOGGER.write_message("=======================================================================")
-    consts.LOGGER.write_message("To report this bug, please give this log to the developers")
-    consts.LOGGER.write_message("")
-    traces = []
-    tb = e.__traceback__
-    while tb is not None:
-        traces.append({
-            "filename": tb.tb_frame.f_code.co_filename,
-            "name": tb.tb_frame.f_code.co_name,
-            "lineno": tb.tb_lineno
-        })
-        tb = tb.tb_next
+def run_game():
+    try:
+        main()
+    except util.ValhallaException as e:
+        consts.LOGGER.write_message("")
+        consts.LOGGER.write_message("=======================================================================")
+        consts.LOGGER.write_message("To report this bug, please give this log to the developers")
+        consts.LOGGER.write_message("")
+        traces = []
+        tb = e.__traceback__
+        while tb is not None:
+            traces.append({
+                "filename": tb.tb_frame.f_code.co_filename,
+                "name": tb.tb_frame.f_code.co_name,
+                "lineno": tb.tb_lineno
+            })
+            tb = tb.tb_next
 
-    for trace in traces:
-        file_dir = trace['filename'].split('/')
-        traceStr = f"File {file_dir[len(file_dir) - 1]}:{trace['lineno']} in {trace['name']}"
-        consts.LOGGER.error("VALHALLA", traceStr)
-    consts.LOGGER.error("VALHALLA", e)
-    consts.LOGGER.stop()
+        for trace in traces:
+            file_dir = trace['filename'].split('/')
+            traceStr = f"File {file_dir[len(file_dir) - 1]}:{trace['lineno']} in {trace['name']}"
+            consts.LOGGER.error("VALHALLA", traceStr)
+        consts.LOGGER.error("VALHALLA", e)
+        consts.LOGGER.stop()
+
+run_game()
