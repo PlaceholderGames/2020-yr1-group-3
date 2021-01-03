@@ -4,7 +4,6 @@ Created: 24/10/2020
 """
 from enum import Enum
 
-
 # Screens list
 # All possible screens to exist
 class Screens(Enum):

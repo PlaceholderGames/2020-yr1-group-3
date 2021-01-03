@@ -132,7 +132,8 @@ class Link:
     def render(self):
         if self.on_hover():
             pygame.draw.rect(pygame.display.get_surface(), self.text.colour, (
-            self.text.get_pos()[0], self.text.get_pos()[1] + self.text.get_size()[1] - 2, self.text.get_size()[0], 2))
+                self.text.get_pos()[0], self.text.get_pos()[1] + self.text.get_size()[1] - 2, self.text.get_size()[0],
+                2))
         return self.text.render()
 
     def get_font(self):
@@ -326,6 +327,12 @@ class GUIScreen(pygame.Surface):
                     if link.on_hover():
                         pygame.mixer.Sound("assets/audio/sounds/gui/button_click.ogg").play()
                         link.click()
+
+    def handle_key_event(self):
+        for event in pygame.event.get():
+            if event.type == pygame.KEYUP:
+                consts.LOGGER.debug("VALHALLA", f"{pygame.key.name(event.key).capitalize()} key pressed")
+
 
     def render(self):
         for component in self.components:
@@ -607,7 +614,8 @@ class GameOverlay(GUIScreen):
         bottle_count = Text(f"x{len(consts.game.get_player().get_items_by_type(Bottle))}", "Pixellari", 16,
                             x=bottle_img.get_pos()[0] + 16, y=bottle_img.get_pos()[1])
 
-        score_text = Text(f"Score: {consts.score}", "Pixellari", 24, x=bottle_img.get_pos()[0] + 4, y=bottle_img.get_pos()[1] + bottle_img.get_size()[1] + 6)
+        score_text = Text(f"Score: {consts.score}", "Pixellari", 24, x=bottle_img.get_pos()[0] + 4,
+                          y=bottle_img.get_pos()[1] + bottle_img.get_size()[1] + 6)
 
         background = pygame.Surface((160, 128))
         background.set_alpha(127)
@@ -823,14 +831,21 @@ class SplashScreen(GUIScreen):
 
         self.loadedPercent_text = Text("0%", "Pixellari", 24)
         self.loadedPercent_text.set_pos((self.usw_text.get_pos()[0] + (self.usw_text.get_size()[0] / 2) - (
-                    self.loadedPercent_text.get_size()[0] / 2), self.usw_text.get_pos()[1] + 28))
+                self.loadedPercent_text.get_size()[0] / 2), self.usw_text.get_pos()[1] + 28))
         self.loadedPercent_text.set_color((0, 0, 0))
 
         self.add_element("Caption", caption_text)
         self.add_element("USW", self.usw_text)
 
+    def handle_key_event(self):
+        super(SplashScreen, self).handle_key_event()
+
+        if pygame.key.get_pressed()[pygame.K_ESCAPE]:
+            consts.current_screen = Screens.QUIT
+
     def render(self):
         super(SplashScreen, self).render()
+
         loading_bar_thickness = 2
         loading_bar_width = self.usw_text.get_size()[0]
         loaded_width = util.bind(self.loading, 0, 100, 1, loading_bar_width - (loading_bar_thickness * 2), True)
@@ -843,12 +858,13 @@ class SplashScreen(GUIScreen):
         loaded_bar.fill((255, 0, 0))
 
         self.loadedPercent_text.set_pos((loadingbar_pos[0] + (loading_bar.get_size()[0] / 2) - (
-                self.loadedPercent_text.get_size()[0] / 2), loadingbar_pos[1] + (32 / 2) - (
-                                                 self.loadedPercent_text.get_size()[1] / 2) + 2))
+               self.loadedPercent_text.get_size()[0] / 2), loadingbar_pos[1] + (32 / 2) - (
+                                                self.loadedPercent_text.get_size()[1] / 2) + 2))
         pygame.display.get_surface().blit(loading_bar, (loadingbar_pos[0], loadingbar_pos[1]))
         pygame.display.get_surface().blit(loaded_bar, (
         loadingbar_pos[0] + loading_bar_thickness, loadingbar_pos[1] + loading_bar_thickness))
         pygame.display.get_surface().blit(self.loadedPercent_text.render(), self.loadedPercent_text.get_pos())
+
         if self.loading <= 100:
             self.loadedPercent_text.set_text(f"{self.loading}%")
 
@@ -1071,6 +1087,12 @@ class SettingScreen(GUIScreen):
         util.save_to_settings_file()
         self.showSavingText = 32
 
+    def handle_key_event(self):
+        super(SettingScreen, self).handle_key_event()
+
+        if pygame.key.get_pressed()[pygame.K_ESCAPE]:
+            consts.current_screen = consts.last_screen
+
     def __init__(self):
         super().__init__()
 
@@ -1141,6 +1163,12 @@ class CreditScreen(GUIScreen):
     def back_action(self):
         consts.LOGGER.debug("VALHALLA", "Back button pressed")
         consts.current_screen = consts.last_screen
+
+    def handle_key_event(self):
+        super(CreditScreen, self).handle_key_event()
+
+        if pygame.key.get_pressed()[pygame.K_ESCAPE]:
+            consts.current_screen = consts.last_screen
 
     def __init__(self):
         super().__init__()

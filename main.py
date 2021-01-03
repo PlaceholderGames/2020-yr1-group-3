@@ -9,6 +9,7 @@ import util
 import datetime
 import platform
 import ctypes
+import pytmx
 
 from gui import MainMenu, SplashScreen, DebugOverlay, GameOverlay, CreditScreen, PauseOverlay, SettingScreen, \
     GameOverOverlay, DisturbingSoundScreen
@@ -52,7 +53,7 @@ def main():
         displays_str = str(displays)
         resolution = displays_str.split(" ")[3][:-4]
         resolution_tuple = tuple(int(res) for res in resolution.split('x'))
-    elif platform.system("Windows"):
+    elif platform.system() == "Windows":
         resolution_tuple = (ctypes.windll.user32.GetSystemMetrics(0), ctypes.windll.user32.GetSystemMetrics(1))
 
 
@@ -86,6 +87,10 @@ def main():
     sound_warning_screen = DisturbingSoundScreen()
 
     while consts.running:
+        # Reset the screen everyframe so that we
+        # don't have a transparent background each frame refresh
+        window.fill((0, 0, 0))
+
         if consts.game is not None:
             game_result = GameOverOverlay()
             game_overlay = GameOverlay()
@@ -95,9 +100,19 @@ def main():
         consts.MOUSE.update(pygame.mouse.get_pos())
         consts.LOGGER.launch_time = datetime.datetime.now()
 
-        # Reset the screen everyframe so that we
-        # don't have a transparent background each frame refresh
-        window.fill((0, 0, 0))
+        if consts.current_screen != Screens.GAME:
+            surface = pygame.display.get_surface()
+            background = pytmx.load_pygame("assets/textures/gui/background.tmx", pixelalpha=True)
+
+            bg = pygame.Surface(surface.get_size())
+            for layer in background.visible_layers:
+                if isinstance(layer, pytmx.TiledTileLayer):
+                    for x, y, gid in layer:
+                        tile = background.get_tile_image_by_gid(gid)
+                        if tile:
+                            bg.blit(tile, (x * background.tilewidth, y * background.tileheight))
+
+            surface.blit(pygame.transform.scale(bg, pygame.display.get_surface().get_size()), (0,0))
 
         # Stores the current screen in a temporary value
         # to report to logger when the screen has changed
@@ -108,6 +123,7 @@ def main():
         if consts.current_screen == Screens.SPLASHSCREEN:
             if not splash_screen.loaded():
                 splash_screen.render()
+                splash_screen.handle_key_event()
             else:
                 consts.current_screen = Screens.MAIN_MENU
 
@@ -116,18 +132,21 @@ def main():
         elif consts.current_screen == Screens.MAIN_MENU:
             main_menu.render()
             main_menu.handle_mouse_event()
+            main_menu.handle_key_event()
 
         # Render Settings screen
         #
         elif consts.current_screen == Screens.SETTINGS:
             settings_screen.render()
             settings_screen.handle_mouse_event()
+            settings_screen.handle_key_event()
 
         # Render Credits screen
         #
         elif consts.current_screen == Screens.CREDITS:
             credit_screen.render()
             credit_screen.handle_mouse_event()
+            credit_screen.handle_key_event()
 
         # Render game screen
         #
