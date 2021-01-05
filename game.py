@@ -346,6 +346,8 @@ class Portal(object):
 
     def update(self, player):
         if self.collision_rect.colliderect(player.rect):
+            consts.LOGGER.debug("VALHALLA", "Player used Portal")
+            consts.LOGGER.debug("VALHALLA", f"Switched scenes from {consts.game.scenes[consts.current_scene].name[2:].upper()} to {consts.game.scenes[self.target_scene].name[2:].upper()}")
             consts.current_scene = self.target_scene
             player.rect.x, player.rect.y = self.target_coords
 
@@ -371,6 +373,7 @@ class SceneTXM(object):
 
     def __init__(self, txm_file):
         self.map_data = pytmx.load_pygame(txm_file, pixelalpha=True)
+        self.name = txm_file.split("/")[1].split("\\")[1].split(".")[0]
         self.size = self.map_data.width * self.map_data.tilewidth, self.map_data.height * self.map_data.tileheight
         self.collides = []
         self.entities = {
