@@ -33,7 +33,7 @@ class Checkbox:
             (self.pos[1] + 18) - self.text.get_size()[1] / 2
         ))
 
-        self.sprite = util.Spritesheet("assets/textures/gui/checkbox.png")
+        self.sprite = util.Spritesheet(consts.MANIFEST["TEXTURES"]["GUI"]["checkbox"])
 
     def render(self):
         #     Base sprite (No hover)                  Hover sprite
@@ -75,10 +75,10 @@ class Checkbox:
 
 class Text:
     def __init__(self, _text, font_name, size, font_type=None, x=0, y=0):
-        if os.path.isdir(f"assets/fonts/{font_name}"):
-            self.font = pygame.font.Font(f"assets/fonts/{font_name}/{font_type}.ttf")
+        if os.path.isdir(consts.MANIFEST["FONTS"][font_name]):
+            self.font = pygame.font.Font(consts.MANIFEST["FONTS"][font_name][font_type])
         else:
-            self.font = pygame.font.Font(f"assets/fonts/{font_name}.ttf", size)
+            self.font = pygame.font.Font(consts.MANIFEST["FONTS"][font_name], size)
         self.colour = (255, 255, 255)
         self.text = _text
         self.pos = (x, y)
@@ -178,7 +178,7 @@ class Button:
             (self.pos[1] + self.size[1] / 2) - self.text.get_size()[1] / 2
         ))
 
-        self.sprite = util.Spritesheet("assets/textures/gui/button.png")
+        self.sprite = util.Spritesheet(consts.MANIFEST["TEXTURES"]["GUI"]["button"])
 
     def render(self):
         normal = self.sprite.image_at((0, 0, 128, 32), -1)
@@ -226,7 +226,7 @@ class Heart:
             32
         )
 
-        self.sprite = util.Spritesheet("assets/textures/spritesheets/steam_heart.png")
+        self.sprite = util.Spritesheet(consts.MANIFEST["TEXTURES"]["SPRITESHEETS"]["steam_heart"])
 
     def render(self):
         full = self.sprite.image_at((0, 0, 32, 32), -1)
@@ -267,7 +267,7 @@ class Beer:
             32
         )
 
-        self.sprite = util.Spritesheet("assets/textures/spritesheets/beer.png")
+        self.sprite = util.Spritesheet(consts.MANIFEST["TEXTURES"]["SPRITESHEETS"]["beer"])
 
     def render(self):
         full = self.sprite.image_at((0, 0, 32, 32), -1)
@@ -310,22 +310,24 @@ class GUIScreen(pygame.Surface):
         # self.components.append((element, pos))
 
     def handle_mouse_event(self):
+        button_click = pygame.mixer.Sound(consts.MANIFEST["AUDIO"]["SOUNDS"]["GUI"]["button_click"])
+        
         if pygame.event.get(pygame.MOUSEBUTTONDOWN):
             for component in self.components:
                 if isinstance(self.components[component], Button):
                     button = self.components[component]
                     if button.on_hover():
-                        pygame.mixer.Sound("assets/audio/sounds/gui/button_click.ogg").play()
+                        button_click.play()
                         button.action()
                 elif isinstance(self.components[component], Checkbox):
                     checkbox = self.components[component]
                     if checkbox.on_hover():
-                        pygame.mixer.Sound("assets/audio/sounds/gui/button_click.ogg").play()
+                        button_click.play()
                         checkbox.toggle()
                 elif isinstance(self.components[component], Link):
                     link = self.components[component]
                     if link.on_hover():
-                        pygame.mixer.Sound("assets/audio/sounds/gui/button_click.ogg").play()
+                        button_click.play()
                         link.click()
 
     def handle_key_event(self):
@@ -609,7 +611,7 @@ class GameOverlay(GUIScreen):
             else:
                 beer.set_state("NONE")
 
-        bottle_img = util.Image("assets/textures/sprites/beer_bottle.png", (16, 80))
+        bottle_img = util.Image(consts.MANIFEST["TEXTURES"]["SPRITES"]["beer_bottle"], (16, 80))
         from game import Bottle
         bottle_count = Text(f"x{len(consts.game.get_player().get_items_by_type(Bottle))}", "Pixellari", 16,
                             x=bottle_img.get_pos()[0] + 16, y=bottle_img.get_pos()[1])
@@ -804,7 +806,7 @@ class SplashScreen(GUIScreen):
 
         window_width, window_height = pygame.display.get_surface().get_size()
 
-        usw_logo = util.Image("assets/textures/gui/usw_logo.jpg")
+        usw_logo = util.Image(consts.MANIFEST["TEXTURES"]["GUI"]["usw_logo"])
         usw_logo = pygame.transform.scale(usw_logo.render(), (192, 192))
 
         usw_logo_width, usw_logo_height = usw_logo.get_size()

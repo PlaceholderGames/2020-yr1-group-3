@@ -36,3 +36,5 @@ SETTINGS_TEMPLATE = {
 
 
 SETTINGS = {}
+
+MANIFEST = {}

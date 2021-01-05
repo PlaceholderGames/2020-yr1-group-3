@@ -171,10 +171,11 @@ class Logger:
 
 # Stops all processes for the game
 def quit_game():
+    import sys
     consts.running = False
     consts.LOGGER.info("Pygame", "Stopping...")
     consts.LOGGER.stop()
-    quit()
+    sys.exit()
 
 
 # Constrains a value between a minimum and maximum value.
@@ -275,6 +276,13 @@ def load_settings_file():
                 consts.SETTINGS['RESOLUTION']['HEIGHT'] = resolution_tuple[1]
 
         save_to_settings_file()
+
+def load_manifest_file():
+    with open("manifest.json", "r") as file:
+        consts.LOGGER.info("Valhalla", "Loading manifest")
+        consts.MANIFEST = json.load(file)
+    file.close()
+    consts.LOGGER.info("Valhalla", "Finished loading manifest from file")
 
 
 class ValhallaException(Exception):
