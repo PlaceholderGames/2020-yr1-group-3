@@ -34,6 +34,12 @@ def main():
         util.save_to_settings_file()
 
 
+    if os.path.exists("manifest.json"):
+        consts.LOGGER.info("Valhalla", "Settings file already exists; ")
+        util.load_manifest_file()
+
+        
+
     # Check for data files
     if os.path.exists("data"):
         if os.path.exists("data/score.dat"):
@@ -72,7 +78,7 @@ def main():
 
     # Creates window
     pygame.display.set_caption("The BeerZerker")
-    pygame.display.set_icon(util.Image("assets/textures/sprites/beer_bottle.png").render())
+    pygame.display.set_icon(util.Image(consts.MANIFEST["TEXTURES"]["SPRITES"]["beer_bottle"]).render())
     consts.LOGGER.info("Pygame", "Created window")
 
     start_time = pygame.time.get_ticks()
@@ -102,7 +108,7 @@ def main():
 
         if consts.current_screen != Screens.GAME:
             surface = pygame.display.get_surface()
-            background = pytmx.load_pygame("assets/textures/gui/background.tmx", pixelalpha=True)
+            background = pytmx.load_pygame(consts.MANIFEST["TEXTURES"]["GUI"]["background"], pixelalpha=True)
 
             bg = pygame.Surface(surface.get_size())
             for layer in background.visible_layers:

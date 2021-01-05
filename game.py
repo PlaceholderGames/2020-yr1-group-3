@@ -78,8 +78,8 @@ class Player(Entity):
         self.sprinting = False
 
         self.texture = pygame.Surface((32, 32), pygame.SRCALPHA)
-        upper_body = pygame.transform.scale(Spritesheet("assets/textures/sprites/player.png").image_at((0,0, 32, 32), -1), (15, 15))
-        lower_body = pygame.transform.scale(Spritesheet("assets/textures/sprites/player.png").image_at((0, 32, 32, 32), -1), (15, 15))
+        upper_body = pygame.transform.scale(Spritesheet(consts.MANIFEST["TEXTURES"]["SPRITES"]["player"]).image_at((0,0, 32, 32), -1), (15, 15))
+        lower_body = pygame.transform.scale(Spritesheet(consts.MANIFEST["TEXTURES"]["SPRITES"]["player"]).image_at((0, 32, 32, 32), -1), (15, 15))
         self.texture.blit(upper_body, (0, 0))
         self.texture.blit(lower_body, (0, 15))
 
@@ -113,7 +113,7 @@ class Player(Entity):
     def draw(self):
         super(Player, self).draw()
         if self.attacking != 0:
-            self.screen.blit(pygame.transform.rotate(Spritesheet("assets/textures/spritesheets/items.png").image_at((64, 0, 32, 32), -1), self.facing_direction.value), (self.atkr.x, self.atkr.y))
+            self.screen.blit(pygame.transform.rotate(Spritesheet(consts.MANIFEST["TEXTURES"]["SPRITESHEETS"]["items"]).image_at((64, 0, 32, 32), -1), self.facing_direction.value), (self.atkr.x, self.atkr.y))
             # pygame.draw.rect(self.screen, (56, 56, 56), self.atkr)
 
     def update(self):
@@ -146,7 +146,7 @@ class Player(Entity):
             for index, item in enumerate(self.items):
                 if type(item) == Bottle:
                     if consts.SETTINGS["HUMAN_SOUNDS"]["VALUE"]:
-                        pygame.mixer.Sound("assets/audio/sounds/game/drink_use.ogg").play()
+                        pygame.mixer.Sound(consts.MANIFEST["AUDIO"]["SOUNDS"]["GAME"]["drink_use"]).play()
                     self.items.pop(index)
                     self.drunkenness += 20
 
@@ -183,7 +183,7 @@ class Enemy(Entity):
         self.hurting = 0
 
         randomId = int(round(random()))
-        self.texture = pygame.transform.scale(Spritesheet("assets/textures/spritesheets/guards.png").image_at(((randomId) * 32, 0, 32, 32), -1), (32, 32))
+        self.texture = pygame.transform.scale(Spritesheet(consts.MANIFEST["TEXTURES"]["SPRITESHEETS"]["guards"]).image_at(((randomId) * 32, 0, 32, 32), -1), (32, 32))
 
     def follow(self, player):
         # Find direction vector (dx, dy) between enemy and player.
@@ -243,7 +243,7 @@ class Bottle(DroppedItem):
         ))
         self.rect_colour = (0, 255, 0)
 
-        self.sprite = Image("assets/textures/sprites/beer_bottle.png", transparency=True)
+        self.sprite = Image(consts.MANIFEST["TEXTURES"]["SPRITES"]["beer_bottle"], transparency=True)
 
     def draw(self):
         # super(Bottle, self).draw()
@@ -346,6 +346,8 @@ class Portal(object):
 
     def update(self, player):
         if self.collision_rect.colliderect(player.rect):
+            consts.LOGGER.debug("VALHALLA", "Player used Portal")
+            consts.LOGGER.debug("VALHALLA", f"Switched scenes from {consts.game.scenes[consts.current_scene].name[2:].upper()} to {consts.game.scenes[self.target_scene].name[2:].upper()}")
             consts.current_scene = self.target_scene
             player.rect.x, player.rect.y = self.target_coords
 
@@ -371,6 +373,7 @@ class SceneTXM(object):
 
     def __init__(self, txm_file):
         self.map_data = pytmx.load_pygame(txm_file, pixelalpha=True)
+        self.name = txm_file.split("/")[1].split("\\")[1].split(".")[0]
         self.size = self.map_data.width * self.map_data.tilewidth, self.map_data.height * self.map_data.tileheight
         self.collides = []
         self.entities = {
@@ -481,7 +484,7 @@ class SceneTXM(object):
 
                 elif type(entity) == Bottle:
                     if entity.picked_up(player):
-                        pygame.mixer.Sound("assets/audio/sounds/game/bottle_pickup.ogg").play()
+                        pygame.mixer.Sound(consts.MANIFEST["AUDIO"]["SOUNDS"]["GAME"]["bottle_pickup"]).play()
                         player.add_item(entity)
                         self.entities["ITEMS"].pop(index)
 
