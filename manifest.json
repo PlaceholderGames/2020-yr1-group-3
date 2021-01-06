@@ -9,7 +9,9 @@
                 "drink_use": "assets/audio/sounds/game/drink_use.ogg"
             }
         },
-        "MUSIC": {}
+        "MUSIC": {
+            "game": "assets/audio/music/game.wav"
+        }
     },
     "FONTS": {
         "Pixellari": "assets/fonts/Pixellari.ttf"

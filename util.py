@@ -262,8 +262,14 @@ def load_settings_file():
         if platform.system() == 'Windows':
             if consts.SETTINGS['RESOLUTION']['WIDTH'] > ctypes.windll.user32.GetSystemMetrics(0):
                 consts.SETTINGS['RESOLUTION']['WIDTH'] = ctypes.windll.user32.GetSystemMetrics(0)
+            elif consts.SETTINGS['RESOLUTION']['WIDTH'] < 800:
+                consts.SETTINGS['RESOLUTION']['WIDTH'] = 800
+
             if consts.SETTINGS['RESOLUTION']['HEIGHT'] > ctypes.windll.user32.GetSystemMetrics(1):
                 consts.SETTINGS['RESOLUTION']['HEIGHT'] = ctypes.windll.user32.GetSystemMetrics(1)
+            elif consts.SETTINGS['RESOLUTION']['HEIGHT'] < 600:
+                consts.SETTINGS['RESOLUTION']['HEIGHT'] = 600
+
         elif platform.system() == 'Linux':
             displays = os.popen('xrandr | grep " connected primary"').read()
             displays_str = str(displays)
@@ -272,8 +278,13 @@ def load_settings_file():
 
             if consts.SETTINGS['RESOLUTION']['WIDTH'] >= resolution_tuple[0]:
                 consts.SETTINGS['RESOLUTION']['WIDTH'] = resolution_tuple[0]
+            elif consts.SETTINGS['RESOLUTION']['WIDTH'] < 800:
+                consts.SETTINGS['RESOLUTION']['WIDTH'] = 800
+
             if consts.SETTINGS['RESOLUTION']['HEIGHT'] > resolution_tuple[1]:
                 consts.SETTINGS['RESOLUTION']['HEIGHT'] = resolution_tuple[1]
+            elif consts.SETTINGS['RESOLUTION']['HEIGHT'] < 600:
+                consts.SETTINGS['RESOLUTION']['HEIGHT'] = 600
 
         save_to_settings_file()
 
@@ -283,7 +294,6 @@ def load_manifest_file():
         consts.MANIFEST = json.load(file)
     file.close()
     consts.LOGGER.info("Valhalla", "Finished loading manifest from file")
-
 
 class ValhallaException(Exception):
     pass

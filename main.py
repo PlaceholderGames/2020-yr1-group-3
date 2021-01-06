@@ -15,8 +15,8 @@ from gui import MainMenu, SplashScreen, DebugOverlay, GameOverlay, CreditScreen,
     GameOverOverlay, DisturbingSoundScreen
 from enums import Screens
 
-def main():
 
+def main():
     # Setup pygame
     consts.clock = pygame.time.Clock()
     pygame.init()
@@ -33,12 +33,9 @@ def main():
         util.create_settings_file()
         util.save_to_settings_file()
 
-
     if os.path.exists("manifest.json"):
         consts.LOGGER.info("Valhalla", "Settings file already exists; ")
         util.load_manifest_file()
-
-        
 
     # Check for data files
     if os.path.exists("data"):
@@ -61,7 +58,6 @@ def main():
         resolution_tuple = tuple(int(res) for res in resolution.split('x'))
     elif platform.system() == "Windows":
         resolution_tuple = (ctypes.windll.user32.GetSystemMetrics(0), ctypes.windll.user32.GetSystemMetrics(1))
-
 
     # Checks if fullscreen setting is true
     if consts.SETTINGS['FULLSCREEN']:
@@ -118,7 +114,7 @@ def main():
                         if tile:
                             bg.blit(tile, (x * background.tilewidth, y * background.tileheight))
 
-            surface.blit(pygame.transform.scale(bg, pygame.display.get_surface().get_size()), (0,0))
+            surface.blit(pygame.transform.scale(bg, pygame.display.get_surface().get_size()), (0, 0))
 
         # Stores the current screen in a temporary value
         # to report to logger when the screen has changed
@@ -185,9 +181,18 @@ def main():
         # Quit game if player screen reaches Screens.QUIT
         #
         elif consts.current_screen == Screens.QUIT:
-            if not pygame.mixer.get_busy():
-                consts.LOGGER.info("VALHALLA", "QUIT Screen recognised. Quitting game...")
-                util.quit_game()
+            if consts.game is None:
+                if not pygame.mixer.get_busy():
+                    consts.LOGGER.info("VALHALLA", "QUIT Screen recognised. Quitting game...")
+                    pygame.quit()
+                    util.quit_game()
+            else:
+                if consts.game.music.get_busy():
+                    consts.game.music.stop()
+                    consts.LOGGER.info("VALHALLA", "QUIT Screen recognised. Quitting game...")
+                    pygame.quit()
+                    util.quit_game()
+
 
         elif consts.current_screen == Screens.SOUND_WARNING:
             sound_warning_screen.render()
@@ -197,35 +202,33 @@ def main():
         if consts.SETTINGS['DEBUG_OVERLAY']:
             debug_overlay.render()
 
-        # Perform all event checks while the player
-        # isn't on the splashscreen
-        if not consts.current_screen == Screens.SPLASHSCREEN:
-            for event in pygame.event.get():
-                if event.type == pygame.KEYDOWN:
-
-                    # Toggle debug overlay if F12 key is pressed
-                    if event.key == pygame.K_F12:
-                        if consts.SETTINGS['DEBUG_OVERLAY']:
-                            consts.LOGGER.debug("Valhalla", "Hiding debug overlay")
-                        else:
-                            consts.LOGGER.debug("Valhalla", "Showing debug overlay")
-                        consts.SETTINGS['DEBUG_OVERLAY'] = not consts.SETTINGS['DEBUG_OVERLAY']
-
-                    if consts.game is not None:
-                        # Pause/unpause the game if escape button is pressed
-                        if event.key == pygame.K_ESCAPE:
-                            consts.game.pause(not consts.game.paused)
-                            # pygame.mouse.set_visible(consts.game.paused)
-                            # pygame.mouse.set_pos(int(window.get_size()[0] / 2), int(window.get_size()[1] / 2))
-
-                # If window "x" button pressed, close the game
-                if event.type == pygame.QUIT:
-                    util.quit_game()
-
             # Log updated screen
             if temp_screen != consts.current_screen:
                 consts.LOGGER.info("Valhalla",
                                    f"Switched screens from {Screens(temp_screen).name} to {Screens(consts.current_screen).name}")
+
+        for event in pygame.event.get():
+
+            if event.type == pygame.KEYDOWN:
+                # Toggle debug overlay if F12 key is pressed
+                if event.key == pygame.K_F12:
+                    if consts.SETTINGS['DEBUG_OVERLAY']:
+                        consts.LOGGER.debug("Valhalla", "Hiding debug overlay")
+                    else:
+                        consts.LOGGER.debug("Valhalla", "Showing debug overlay")
+                    consts.SETTINGS['DEBUG_OVERLAY'] = not consts.SETTINGS['DEBUG_OVERLAY']
+
+                if consts.game is not None:
+                    # Pause/unpause the game if escape button is pressed
+                    if event.key == pygame.K_ESCAPE:
+                        consts.game.pause(not consts.game.paused)
+
+            if event.type == pygame.KEYUP:
+                consts.LOGGER.info("VALHALLA", f"{pygame.key.name(event.key).capitalize()} key pressed")
+
+            # If window "x" button pressed, close the game
+            if event.type == pygame.QUIT:
+                consts.current_screen = Screens.QUIT
 
         pygame.display.update()
 
@@ -257,5 +260,6 @@ def run_game():
             consts.LOGGER.error("VALHALLA", traceStr)
         consts.LOGGER.error("VALHALLA", e)
         consts.LOGGER.stop()
+
 
 run_game()
