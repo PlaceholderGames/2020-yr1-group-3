@@ -20,7 +20,7 @@ class Entity(object):
         self.clock = pygame.time.Clock()
         self.health = 100
         self.screen = pygame.display.get_surface()
-        self.rect = pygame.rect.Rect((self.screen.get_size()[0] / 2, self.screen.get_size()[1] / 2, 32, 32))
+        self.rect = pygame.rect.Rect((0,0, 32, 32))
         self.rect_colour = (255, 255, 255)
         self.speed = 1.4
         self.texture = None
@@ -90,6 +90,10 @@ class Player(Entity):
         # lower_body = pygame.transform.scale(Spritesheet(consts.MANIFEST["TEXTURES"]["SPRITES"]["player"]).image_at((0, 32, 32, 32), -1), (15, 15))
         # self.texture.blit(upper_body, (0, 0))
         # self.texture.blit(lower_body, (0, 15))
+
+    def set_pos(self, x, y):
+        self.rect.x = x
+        self.rect.y = y
 
     def handle_keys(self):
         key = pygame.key.get_pressed()
@@ -428,9 +432,11 @@ class SceneTXM(object):
                         'player_y'] * scaled_y
                     self.portals.append(Portal(portal_rect, tile_object.rotation, portal_to, player_loc))
             elif tile_object.type == 'player':
-                if consts.game is not None:
-                    player = consts.game.get_player()
-                    (player.rect.x, player.rect.y) = tile_object.x * scaled_x, tile_object.y * scaled_y
+                # # if consts.game is not None:
+                #     print("There is player object")
+                #     player = consts.game.get_player()
+                #     player.set_pos(tile_object.x * scaled_x, tile_object.y * scaled_y)
+                pass
             else:
                 raise ValhallaException(
                     f"[{txm_file}]: Type {tile_object.type} is valid object type. This occurred for Object {tile_object.id}")
@@ -530,6 +536,13 @@ class Game:
         import glob
         for sceneFile in glob.glob("assets/maps/*.tmx"):
             self.scenes.append(SceneTXM(sceneFile))
+
+        size = self.scenes[0].map_data.width * self.scenes[0].map_data.tilewidth, self.scenes[0].map_data.height * self.scenes[0].map_data.tileheight
+        scaled_x = pygame.display.get_surface().get_size()[0] / size[0]
+        scaled_y = pygame.display.get_surface().get_size()[1] / size[1]
+        for tile_ob in self.scenes[0].map_data.objects:
+            if tile_ob.type == 'player':
+                self.player.set_pos(tile_ob.x * scaled_x, tile_ob.y * scaled_y)
 
         self.game_over = False
         self.paused = False
