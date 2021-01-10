@@ -4,7 +4,6 @@ Created: 24/10/2020
 """
 from enum import Enum
 
-
 # Screens list
 # All possible screens to exist
 class Screens(Enum):
@@ -21,14 +20,14 @@ class Screens(Enum):
 # All possible directions to exit
 # Needed for player attack
 class Direction(Enum):
-    UP = 1
-    DOWN = 2
-    LEFT = 3
-    RIGHT = 4
-    UP_LEFT = 5
-    UP_RIGHT = 6
-    DOWN_LEFT = 7
-    DOWN_RIGHT = 8
+    UP = 0
+    DOWN = 180
+    LEFT = 90
+    RIGHT = 270
+    UP_LEFT = 45
+    UP_RIGHT = 315
+    DOWN_LEFT = 135
+    DOWN_RIGHT = 225
 
 # Scene list
 # All scenes in game

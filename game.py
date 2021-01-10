@@ -4,11 +4,12 @@
 """
 
 import pygame
-import cmath
+import math
+import pytmx
 
 import consts
-from enums import Direction, Scenes
-from util import bind, Spritesheet, lerp, Image
+from enums import Direction
+from util import bind, Spritesheet, lerp, Image, ValhallaException
 
 from random import randint, random
 
@@ -22,6 +23,9 @@ class Entity(object):
         self.rect = pygame.rect.Rect((self.screen.get_size()[0] / 2, self.screen.get_size()[1] / 2, 32, 32))
         self.rect_colour = (255, 255, 255)
         self.speed = 1.4
+        self.texture = None
+        self.range_size = 50
+        self.range = pygame.draw.circle(pygame.display.get_surface(), (255, 0, 255), (self.rect.x + (self.rect.width / 2), self.rect.y + (self.rect.height / 2)), self.range_size)
 
     def get_health(self):
         return self.health
@@ -33,15 +37,18 @@ class Entity(object):
         self.health += healing
 
     def draw(self):
-        pygame.draw.rect(self.screen, self.rect_colour, self.rect)
+        if self.texture is None:
+            pygame.draw.rect(self.screen, self.rect_colour, self.rect)
+        else:
+            self.screen.blit(self.texture, (self.rect.x, self.rect.y))
+
+        if consts.SETTINGS["DEBUG_OVERLAY"]:
+            pygame.draw.circle(pygame.display.get_surface(), (255, 0, 255),
+                               (self.rect.x + (self.rect.width / 2), self.rect.y + (self.rect.height / 2)),
+                               self.range_size)
 
     def update(self):
-        self.clock.tick(120)
-        if self.rect.x <= 0:
-            self.rect.x = 0
-        if self.rect.y <= 0:
-            self.rect.y = 0
-
+        # self.clock.tick(120)
         if self.rect.x + 32 >= self.screen.get_size()[0]:
             self.rect.x = self.screen.get_size()[0] - 32
         if self.rect.y + 32 >= self.screen.get_size()[1]:
@@ -51,9 +58,15 @@ class Entity(object):
             if int(consts.time_since_start / 1000) % 2 == 0:
                 self.heal(0.01)
 
+        self.range.update(self.rect.x, self.rect.y, self.range_size, self.range_size)
+
     def collides(self, other):
         if self is not other:
             return self.rect.colliderect(other.rect)
+
+    def in_range(self, other):
+        return math.sqrt((self.range.x - other.range.x) ** 2 + (self.range.y - other.range.y) ** 2) <= (
+                    self.range_size * 2)
 
 
 # Uses player as a rectangle
@@ -63,15 +76,25 @@ class Player(Entity):
         super().__init__()
         self.items = []
         self.attacking = 0
+        self.position = (self.rect.x, self.rect.y)
         self.atkr = pygame.rect.Rect((self.screen.get_size()[0] / 2, self.screen.get_size()[1] / 2, 16, 32))
         self.facing_direction = Direction.RIGHT
         self.attack_direction = Direction.RIGHT
         self.drunkenness = 100
         self.speed = 1.6
         self.rect_colour = (81, 81, 81)
+        self.sprinting = False
+
+        self.texture = Image(consts.MANIFEST["TEXTURES"]["SPRITES"]["player"]).render()
+        # upper_body = pygame.transform.scale(Spritesheet(consts.MANIFEST["TEXTURES"]["SPRITES"]["player"]).image_at((0,0, 32, 32), -1), (15, 15))
+        # lower_body = pygame.transform.scale(Spritesheet(consts.MANIFEST["TEXTURES"]["SPRITES"]["player"]).image_at((0, 32, 32, 32), -1), (15, 15))
+        # self.texture.blit(upper_body, (0, 0))
+        # self.texture.blit(lower_body, (0, 15))
 
     def handle_keys(self):
         key = pygame.key.get_pressed()
+        self.sprinting = bool(key[pygame.K_LSHIFT] or key[pygame.K_RSHIFT])
+
         if key[pygame.K_LEFT] or key[pygame.K_a]:
             self.facing_direction = Direction.LEFT
             self.rect.move_ip(-self.speed, 0)
@@ -98,10 +121,16 @@ class Player(Entity):
     def draw(self):
         super(Player, self).draw()
         if self.attacking != 0:
-            pygame.draw.rect(self.screen, (56, 56, 56), self.atkr)
+            self.screen.blit(pygame.transform.rotate(
+                Spritesheet(consts.MANIFEST["TEXTURES"]["SPRITESHEETS"]["items"]).image_at((64, 0, 32, 32), -1),
+                self.facing_direction.value), (self.atkr.x, self.atkr.y))
+            # pygame.draw.rect(self.screen, (56, 56, 56), self.atkr)
 
     def update(self):
         super(Player, self).update()
+
+        self.speed = 2 if self.sprinting else 1.6
+
         self.attack_rects = {
             "UP": pygame.rect.Rect((self.rect.x, self.rect.y - self.rect.height, self.rect.width, self.rect.height)),
             "RIGHT": pygame.rect.Rect((self.rect.x + self.rect.width, self.rect.y, self.rect.width, self.rect.height)),
@@ -115,16 +144,19 @@ class Player(Entity):
             self.attacking = 0
 
         self.atkr = self.attack_rects[self.facing_direction.name]
-        self.drunkenness -= 0.05
+        if not self.sprinting:
+            self.drunkenness -= 0.05
+        else:
+            self.drunkenness -= 0.25
 
         if self.drunkenness > 100:
             self.drunkenness = 100
 
-        if self.drunkenness < 90:
-            for index, item in enumerate(self.items):
-                if type(item) == Bottle:
+        for index, item in enumerate(self.items):
+            if type(item) == Bottle:
+                if self.drunkenness < 90:
                     if consts.SETTINGS["HUMAN_SOUNDS"]["VALUE"]:
-                        pygame.mixer.Sound("assets/audio/sounds/game/drink_use.ogg").play()
+                        pygame.mixer.Sound(consts.MANIFEST["AUDIO"]["SOUNDS"]["GAME"]["drink_use"]).play()
                     self.items.pop(index)
                     self.drunkenness += 20
 
@@ -143,14 +175,15 @@ class Player(Entity):
                 item_list.append(item)
         return item_list
 
+
 class Enemy(Entity):
-    def __init__(self):
+    def __init__(self, x, y):
         super().__init__()
         # Limit enemy spawn to window size
         self.rect = pygame.rect.Rect(
             (
-                randint(0, self.screen.get_size()[0] - 32),
-                randint(0, self.screen.get_size()[1] - 32),
+                x,
+                y,
                 32,
                 32
             )
@@ -158,6 +191,11 @@ class Enemy(Entity):
         self.rect_colour = (255, 0, 0)
         self.speed = 1
         self.hurting = 0
+
+        randomId = int(round(random()))
+        self.texture = pygame.transform.scale(
+            Spritesheet(consts.MANIFEST["TEXTURES"]["SPRITESHEETS"]["guards"]).image_at(((randomId) * 32, 0, 32, 32),
+                                                                                        -1), (32, 32))
 
     def follow(self, player):
         # Find direction vector (dx, dy) between enemy and player.
@@ -207,17 +245,17 @@ class DroppedItem(Entity):
 
 
 class Bottle(DroppedItem):
-    def __init__(self):
+    def __init__(self, x, y):
         super().__init__()
         self.screen = pygame.display.get_surface()
         self.rect = pygame.rect.Rect((
-            randint(0, self.screen.get_size()[0] - 32),
-            randint(0, self.screen.get_size()[1] - 32),
+            x,
+            y,
             32, 32
         ))
         self.rect_colour = (0, 255, 0)
 
-        self.sprite = Image("assets/textures/sprites/beer_bottle.png", transparency=True)
+        self.sprite = Image(consts.MANIFEST["TEXTURES"]["SPRITES"]["beer_bottle"], transparency=True)
 
     def draw(self):
         # super(Bottle, self).draw()
@@ -256,7 +294,6 @@ class Collidable(object):
         }
 
     def update(self, entity):
-
         for edge in self.collideEdges:
             collisionEdge = self.collideEdges[edge]
             if collisionEdge.colliderect(entity.rect):
@@ -310,35 +347,123 @@ class Collidable(object):
 
 class Portal(object):
 
-    def __init__(self, rect, target_scene, target_pos):
+    def __init__(self, rect, angle, target_scene, target_pos):
         self.rect = pygame.rect.Rect(rect)
         self.target_scene = target_scene
         self.target_coords = target_pos
+        self.angle = angle
+        self.surface = pygame.transform.rotate(pygame.Surface((self.rect[2], self.rect[3])), self.angle)
+        self.collision_rect = pygame.rect.Rect(self.rect[0], self.rect[1], self.surface.get_rect()[2],
+                                               self.surface.get_rect()[3])
 
     def update(self, player):
-        if self.rect.colliderect(player.rect):
+        if self.collision_rect.colliderect(player.rect):
+            consts.LOGGER.debug("VALHALLA", "Player used Portal")
+            consts.LOGGER.debug("VALHALLA",
+                                f"Switched scenes from {consts.game.scenes[consts.current_scene].name[2:].upper()} to {consts.game.scenes[self.target_scene].name[2:].upper()}")
             consts.current_scene = self.target_scene
             player.rect.x, player.rect.y = self.target_coords
 
     def render(self):
         surface = pygame.display.get_surface()
-        pygame.draw.rect(surface, (128, 0, 255), self.rect)
+        aligned_pos = (
+            self.surface.get_rect()[0] + self.rect[0],
+            self.surface.get_rect()[1] + self.rect[1],
+            self.surface.get_rect()[2],
+            self.surface.get_rect()[3]
+        )
+        pygame.draw.rect(surface, (0, 0, 64), self.collision_rect)
 
 
+# DEPRECATED
 class Scene(object):
 
-    def __init__(self, entities, collisions, portals, background_img=None):
-        self.entities = entities
-        self.collisions = collisions
-        self.portals = portals
-        self.last_player_pos = (0, 0)
-        self.background_image = background_img
-        if self.background_image is not None:
-            self.background = pygame.transform.scale(self.background_image.render(),
-                                                     pygame.display.get_surface().get_size())
+    def __init__(self, *args):
+        raise ValhallaException("Scene class has been deprecated, please use SceneTXM")
+
+
+class SceneTXM(object):
+
+    def __init__(self, txm_file):
+        self.map_data = pytmx.load_pygame(txm_file, pixelalpha=True)
+        self.name = txm_file.split("/")[1].split("\\")[1].split(".")[0]
+        self.size = self.map_data.width * self.map_data.tilewidth, self.map_data.height * self.map_data.tileheight
+        self.collides = []
+        self.entities = {
+            "ITEMS": [],
+            "ENEMIES": []
+        }
+        self.portals = []
+
+        self.item_length = 0
+        self.enemy_length = 0
+
+        mainSurface = pygame.display.get_surface()
+        scaled_x = pygame.display.get_surface().get_size()[0] / self.size[0]
+        scaled_y = pygame.display.get_surface().get_size()[1] / self.size[1]
+        # offset_x = (mainSurface.get_size()[0] - self.size[0]) / 2 if (self.size[0] < mainSurface.get_size()[0]) else 0
+        # offset_y = (mainSurface.get_size()[1] - self.size[1]) / 2 if (self.size[1] < mainSurface.get_size()[1]) else 0
+
+        for tile_object in self.map_data.objects:
+            if tile_object.type == 'collider':
+                building = Collidable((tile_object.x * scaled_x, tile_object.y * scaled_y, tile_object.width * scaled_x,
+                                       tile_object.height * scaled_y), show_collider=False)
+                self.collides.append(building)
+            elif tile_object.type == 'bottle':
+                self.entities["ITEMS"].append(Bottle(tile_object.x * scaled_x, tile_object.y * scaled_y))
+                self.item_length += 1
+            elif tile_object.type == 'enemy':
+                self.entities["ENEMIES"].append(Enemy(tile_object.x * scaled_x, tile_object.y * scaled_y))
+                self.enemy_length += 1
+            elif tile_object.type == 'interior':
+                building = Collidable((tile_object.x * scaled_x, tile_object.y * scaled_y, tile_object.width * scaled_x,
+                                       tile_object.height * scaled_y), True, False)
+                self.collides.append(building)
+            elif tile_object.type == "portal":
+                if tile_object.properties['show']:
+                    portal_to = tile_object.properties['scene_id']
+                    portal_rect = (tile_object.x * scaled_x, tile_object.y * scaled_y, tile_object.width * scaled_x,
+                                   tile_object.height * scaled_y)
+                    player_loc = tile_object.properties['player_x'] * scaled_x, tile_object.properties[
+                        'player_y'] * scaled_y
+                    self.portals.append(Portal(portal_rect, tile_object.rotation, portal_to, player_loc))
+            elif tile_object.type == 'player':
+                if consts.game is not None:
+                    player = consts.game.get_player()
+                    (player.rect.x, player.rect.y) = tile_object.x * scaled_x, tile_object.y * scaled_y
+            else:
+                raise ValhallaException(
+                    f"[{txm_file}]: Type {tile_object.type} is valid object type. This occurred for Object {tile_object.id}")
+
+    def render_map(self, surface):
+        for layer in self.map_data.visible_layers:
+            if isinstance(layer, pytmx.TiledTileLayer):
+                for x, y, gid in layer:
+                    tile = self.map_data.get_tile_image_by_gid(gid)
+                    if tile:
+                        surface.blit(tile, (x * self.map_data.tilewidth, y * self.map_data.tileheight))
+
+    def surface(self):
+        surface = pygame.Surface(self.size)
+        self.render_map(surface)
+        return surface  # pygame.transform.scale(surface, pygame.display.get_surface().get_size())
+
+    def render(self):
+        for portal in self.portals:
+            portal.render()
+
+        for collide in self.collides:
+            collide.draw()
+
+        for item in self.entities["ITEMS"]:
+            item.draw()
+
+        for enemy in self.entities["ENEMIES"]:
+            if isinstance(enemy, Enemy):
+                enemy.draw()
 
     def remaining_enemies(self):
-        return len(self.entities["ENEMY"])
+        return len(self.get_entities_by_type("ENEMIES"))
 
     def get_entities(self):
         return self.entities
@@ -347,26 +472,21 @@ class Scene(object):
         return self.entities[type]
 
     def update(self, player):
-        self.last_player_pos = (player.rect.x, player.rect.y)
-
-        for items in self.entities["ITEMS"]:
-            for collision in self.collisions:
-                if items.rect.colliderect(collision.draw_rect):
-                    items.rect.x = randint(0, pygame.display.get_surface().get_size()[0])
-                    items.rect.y = randint(0, pygame.display.get_surface().get_size()[1])
-
         for portal in self.portals:
             portal.update(player)
 
+        for collide in self.collides:
+            collide.update(player)
+
         for entityType in self.entities:
             for index, entity in enumerate(self.entities[entityType]):
-                for collision in self.collisions:
-                    if type(entity) == Enemy or type(entity) == DroppedItem or type(entity) == Bottle:
-                        collision.update(entity)
-                    collision.update(player)
+                for collide in self.collides:
+                    collide.update(entity)
 
                 if type(entity) == Enemy:
-                    entity.follow(player)
+                    if entity.in_range(player):
+                        entity.follow(player)
+
                     if entity.collides(player) or player.collides(entity):
                         player.take_damage(0.1)
 
@@ -377,74 +497,39 @@ class Scene(object):
                             entity.health -= 0.5
 
                     if entity.health <= 0:
-                        self.entities["ENEMY"].pop(index)
+                        self.entities["ENEMIES"].pop(index)
 
-                if type(entity) == DroppedItem or type(entity) == Bottle:
+                elif type(entity) == Bottle:
                     if entity.picked_up(player):
-                        pygame.mixer.Sound("assets/audio/sounds/game/bottle_pickup.ogg").play()
+                        sound = pygame.mixer.Sound(consts.MANIFEST["AUDIO"]["SOUNDS"]["GAME"]["bottle_pickup"])
+                        sound.set_volume(0.2)
+                        sound.play()
                         player.add_item(entity)
                         self.entities["ITEMS"].pop(index)
 
-                if type(entity) == Enemy or type(entity) == DroppedItem or type(entity) == Bottle:
+                if type(entity) == Enemy or type(entity) == Bottle:
                     entity.update()
-
-    def render(self):
-        for portal in self.portals:
-            portal.render()
-
-        for collision in self.collisions:
-            collision.draw()
-
-        for item in self.entities["ITEMS"]:
-            if type(item) == DroppedItem or type(item) == Bottle:
-                item.draw()
-
-        for enemy in self.entities["ENEMY"]:
-            if type(enemy) == Enemy:
-                enemy.draw()
 
 
 class Game:
 
     def __init__(self):
+        self.music = pygame.mixer.Channel(2)
         self.player = Player()
-        consts.current_scene = Scenes.TUTORIAL
+        consts.current_scene = 0
+        self.scenes = []
 
-        self.scenes = [
-            Scene(
-                {
-                    "ENEMY": [Enemy(), Enemy()],
-                    "ITEMS": [Bottle(), Bottle(), Bottle(), Bottle(), Bottle(), Bottle()],
-                    "PEDESTRIAN": []},
-                [
-                    # Border wall
-                    Collidable((0, 0, 320, 10), show_collider=False),
-                    Collidable((0, 0, 20, pygame.display.get_surface().get_size()[1]), show_collider=False),
-                    Collidable((0, pygame.display.get_surface().get_size()[1] - 20, 372, 20), show_collider=False),
-                    Collidable((470, pygame.display.get_surface().get_size()[1] - 20, 330, 20), show_collider=False),
-                    Collidable((pygame.display.get_surface().get_size()[0] - 28, 192, 28, 408), show_collider=False),
-                    Collidable((pygame.display.get_surface().get_size()[0] - 80, 192, 80, 18), show_collider=False),
-                    Collidable((pygame.display.get_surface().get_size()[0] - 280, 192, 100, 18), show_collider=False),
-                    Collidable((pygame.display.get_surface().get_size()[0] - 280, 0, 16, 210), show_collider=False),
-                    Collidable((418, 0, 115, 10), show_collider=False),
+        self.msc = pygame.mixer.Sound(consts.MANIFEST["AUDIO"]["MUSIC"]["game"])
+        self.msc.set_volume(0.01)
+        if consts.SETTINGS["MUSIC"]:
+            print("Music is on")
+            self.music.play(self.msc, -1)
+        else:
+            self.music.stop()
 
-                    # Buildings
-                    Collidable((428, 9, 92, 202)),
-                    Collidable((340, 89, 60, 118))
-                ],
-                [
-                    Portal((320, 0, 98, 8), Scenes.LEVEL_1, (400, pygame.display.get_surface().get_size()[1] - 40))
-                ],
-                Image("assets/textures/scenes/tutorial.png", transparency=False)
-            ),
-            Scene(
-                {"ENEMY": [Enemy()], "ITEMS": [DroppedItem()], "PEDESTRIAN": []},
-                [Collidable((428, 9, 92, 202))],
-                [Portal((372, pygame.display.get_surface().get_size()[1] - 8, 98, 8), Scenes.TUTORIAL,
-                        (360, 8))],
-                Image("assets/textures/scenes/tutorial.png", transparency=False)
-            )
-        ]
+        import glob
+        for sceneFile in glob.glob("assets/maps/*.tmx"):
+            self.scenes.append(SceneTXM(sceneFile))
 
         self.game_over = False
         self.paused = False
@@ -456,6 +541,15 @@ class Game:
         return self.paused
 
     def pause(self, pause):
+        from enums import Screens
+        if consts.SETTINGS["MUSIC"]:
+            if not self.music.get_busy():
+                self.music.play(self.msc, -1)
+            else:
+                if pause:
+                    self.music.pause()
+                elif not pause and consts.current_screen == Screens.GAME:
+                    self.music.unpause()
         self.paused = pause
 
     def is_game_over(self):
@@ -463,19 +557,23 @@ class Game:
 
     def render(self):
         surface = pygame.display.get_surface()
+        currentScene = self.scenes[consts.current_scene]
 
-        if self.scenes[consts.current_scene.value].background_image is not None:
-            surface.blit(self.scenes[consts.current_scene.value].background, (0, 0))
+        surface.blit(pygame.transform.scale(currentScene.surface(), pygame.display.get_surface().get_size()), (0, 0))
+
         self.player.draw()
-        self.scenes[consts.current_scene.value].render()
+        currentScene.render()
 
     def update(self):
         consts.time_since_start = pygame.time.get_ticks() - consts.start_time
-        currentScene = self.scenes[consts.current_scene.value]
+        currentScene = self.scenes[consts.current_scene]
 
-        self.scenes[consts.current_scene.value].update(self.player)
+        currentScene.update(self.player)
 
-        if self.player.health <= 0 or currentScene.remaining_enemies() == 0 or self.player.drunkenness <= 0:
+        consts.score = int((self.player.health + self.player.drunkenness) + (
+                    (currentScene.enemy_length - currentScene.remaining_enemies()) * 2))
+
+        if self.player.health <= 0 or currentScene.remaining_enemies() == 0 or self.player.drunkenness < 9:
             self.game_over = True
             consts.LOGGER.info("VALHALLA", "Game over! Going back to MAIN_MENU")
 
