@@ -430,7 +430,7 @@ class SceneTXM(object):
             elif tile_object.type == 'player':
                 if consts.game is not None:
                     player = consts.game.get_player()
-                    (player.rect.x, player.rect.y) = tile_object.x, tile_object.y
+                    (player.rect.x, player.rect.y) = tile_object.x * scaled_x, tile_object.y * scaled_y
             else:
                 raise ValhallaException(
                     f"[{txm_file}]: Type {tile_object.type} is valid object type. This occurred for Object {tile_object.id}")
