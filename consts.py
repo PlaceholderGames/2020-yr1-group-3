@@ -25,8 +25,8 @@ SETTINGS_TEMPLATE = {
     "DEBUG_OVERLAY": False,
     "FULLSCREEN": False,
     "RESOLUTION": {
-        "WIDTH":  800,
-        "HEIGHT":  600
+        "WIDTH":  960,
+        "HEIGHT":  960
     },
     "HUMAN_SOUNDS": {
         "SKIP_WARNING": False,
