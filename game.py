@@ -25,9 +25,7 @@ class Entity(object):
         self.speed = 1.4
         self.texture = None
         self.range_size = 50
-        self.range = pygame.draw.circle(pygame.display.get_surface(), (255, 0, 255),
-                                        (self.rect.x + (self.rect.width / 2), self.rect.y + (self.rect.height / 2)),
-                                        self.range_size)
+        self.range = pygame.draw.circle(pygame.display.get_surface(), (255, 0, 255), (self.rect.x + (self.rect.width / 2), self.rect.y + (self.rect.height / 2)), self.range_size)
 
     def get_health(self):
         return self.health
@@ -432,7 +430,7 @@ class SceneTXM(object):
             elif tile_object.type == 'player':
                 if consts.game is not None:
                     player = consts.game.get_player()
-                    (player.rect.x, player.rect.y) = tile_object.x + offset_x, tile_object.y + offset_y
+                    (player.rect.x, player.rect.y) = tile_object.x, tile_object.y
             else:
                 raise ValhallaException(
                     f"[{txm_file}]: Type {tile_object.type} is valid object type. This occurred for Object {tile_object.id}")
@@ -523,7 +521,11 @@ class Game:
 
         self.msc = pygame.mixer.Sound(consts.MANIFEST["AUDIO"]["MUSIC"]["game"])
         self.msc.set_volume(0.01)
-        self.music.play(self.msc, -1)
+        if consts.SETTINGS["MUSIC"]:
+            print("Music is on")
+            self.music.play(self.msc, -1)
+        else:
+            self.music.stop()
 
         import glob
         for sceneFile in glob.glob("assets/maps/*.tmx"):
@@ -540,10 +542,14 @@ class Game:
 
     def pause(self, pause):
         from enums import Screens
-        if pause:
-            self.music.pause()
-        elif not pause and consts.current_screen == Screens.GAME:
-            self.music.unpause()
+        if consts.SETTINGS["MUSIC"]:
+            if not self.music.get_busy():
+                self.music.play(self.msc, -1)
+            else:
+                if pause:
+                    self.music.pause()
+                elif not pause and consts.current_screen == Screens.GAME:
+                    self.music.unpause()
         self.paused = pause
 
     def is_game_over(self):

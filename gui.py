@@ -1087,7 +1087,8 @@ class SettingScreen(GUIScreen):
             "HUMAN_SOUNDS": {
                 "VALUE": self.human_sound_checkbox.state,
                 "SKIP_WARNING": consts.SETTINGS["HUMAN_SOUNDS"]["SKIP_WARNING"]
-            }
+            },
+            "MUSIC": self.music_checkbox.state
         }
         util.save_to_settings_file()
         self.showSavingText = 32
@@ -1122,6 +1123,10 @@ class SettingScreen(GUIScreen):
                                                1] + 4))
         self.human_sound_checkbox.state = consts.SETTINGS['HUMAN_SOUNDS']['VALUE']
 
+        self.music_checkbox = Checkbox(Text("Music", "Pixellari", 26))
+        self.music_checkbox.set_pos((self.human_sound_checkbox.get_pos()[0], self.human_sound_checkbox.get_pos()[1] + self.human_sound_checkbox.get_size()[1] + 4))
+        self.music_checkbox.state = consts.SETTINGS['MUSIC']
+
         back_button = Button(
             Text("Back", "Pixellari", 26),
             (128, 64),
@@ -1141,6 +1146,7 @@ class SettingScreen(GUIScreen):
 
         self.add_element("Fullscreen", self.fullscreen_checkbox)
         self.add_element("Human Sound", self.human_sound_checkbox)
+        self.add_element("Music", self.music_checkbox)
 
         self.add_element("Back button", back_button)
         self.add_element("Save button", save_button)
