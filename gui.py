@@ -1282,7 +1282,7 @@ class CreditScreen(GUIScreen):
         back_button = Button(
             back_text,
             (128, 64),
-            (screen_title.get_pos()[0], window_height / 2 + back_offset[1])
+            (screen_title.get_pos()[0], window_height - (64 + 18))
         )
         back_button.set_action(self.back_action)
 

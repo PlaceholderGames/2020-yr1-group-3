@@ -6,7 +6,7 @@
             },
             "GAME": {
                 "bottle_pickup": "assets/audio/sounds/game/bottle_pickup.wav",
-                "drink_use": "assets/audio/sounds/game/drink_use.ogg"
+                "drink_use": "assets/audio/sounds/game/drink_use.wav"
             }
         },
         "MUSIC": {
