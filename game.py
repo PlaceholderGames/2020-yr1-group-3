@@ -56,7 +56,7 @@ class Entity(object):
 
         if self.get_health() < 100:
             if int(consts.time_since_start / 1000) % 2 == 0:
-                self.heal(0.01)
+                self.heal(0.1)
 
         self.range.update(self.rect.x, self.rect.y, self.range_size, self.range_size)
 
@@ -304,41 +304,42 @@ class Collidable(object):
     def update(self, entity):
         for edge in self.collideEdges:
             collisionEdge = self.collideEdges[edge]
-            if collisionEdge.colliderect(entity.rect):
-                if edge == "TOP":
-                    if not self.inverse:
-                        entity.rect.y = self.draw_rect.y - entity.rect.height
-                    else:
-                        entity.rect.y = self.draw_rect.y + self.collisionThickness
-                elif edge == "RIGHT":
-                    if not self.inverse:
-                        entity.rect.x = self.draw_rect.x + self.draw_rect.width
-                    else:
-                        entity.rect.x = (self.draw_rect.x + self.draw_rect.width) - (
-                                entity.rect.width + self.collisionThickness)
-                elif edge == "BOTTOM":
-                    if not self.inverse:
-                        entity.rect.y = self.draw_rect.y + self.draw_rect.height
-                    else:
-                        entity.rect.y = ((
-                                                 self.draw_rect.y + self.draw_rect.height) - self.collisionThickness) - entity.rect.height
-                elif edge == "LEFT":
-                    if not self.inverse:
+            if not isinstance(entity, int):
+                if collisionEdge.colliderect(entity.rect):
+                    if edge == "TOP":
+                        if not self.inverse:
+                            entity.rect.y = self.draw_rect.y - entity.rect.height
+                        else:
+                            entity.rect.y = self.draw_rect.y + self.collisionThickness
+                    elif edge == "RIGHT":
+                        if not self.inverse:
+                            entity.rect.x = self.draw_rect.x + self.draw_rect.width
+                        else:
+                            entity.rect.x = (self.draw_rect.x + self.draw_rect.width) - (
+                                    entity.rect.width + self.collisionThickness)
+                    elif edge == "BOTTOM":
+                        if not self.inverse:
+                            entity.rect.y = self.draw_rect.y + self.draw_rect.height
+                        else:
+                            entity.rect.y = ((
+                                                     self.draw_rect.y + self.draw_rect.height) - self.collisionThickness) - entity.rect.height
+                    elif edge == "LEFT":
+                        if not self.inverse:
+                            entity.rect.x = self.draw_rect.x - entity.rect.width
+                        else:
+                            entity.rect.x = self.draw_rect.x + self.collisionThickness
+                    elif edge == "TOP_LEFT":
                         entity.rect.x = self.draw_rect.x - entity.rect.width
-                    else:
-                        entity.rect.x = self.draw_rect.x + self.collisionThickness
-                elif edge == "TOP_LEFT":
-                    entity.rect.x = self.draw_rect.x - entity.rect.width
-                    entity.rect.y = self.draw_rect.y - entity.rect.height
-                elif edge == "TOP_RIGHT":
-                    entity.rect.x = self.draw_rect.x + self.draw_rect.width
-                    entity.rect.y = self.draw_rect.y - entity.rect.height
-                elif edge == "BOTTOM_LEFT":
-                    entity.rect.x = self.draw_rect.x - entity.rect.width
-                    entity.rect.y = self.draw_rect.y + self.draw_rect.height
-                elif edge == "BOTTOM_RIGHT":
-                    entity.rect.x = self.draw_rect.x + entity.rect.width
-                    entity.rect.y = self.draw_rect.y + self.draw_rect.height
+                        entity.rect.y = self.draw_rect.y - entity.rect.height
+                    elif edge == "TOP_RIGHT":
+                        entity.rect.x = self.draw_rect.x + self.draw_rect.width
+                        entity.rect.y = self.draw_rect.y - entity.rect.height
+                    elif edge == "BOTTOM_LEFT":
+                        entity.rect.x = self.draw_rect.x - entity.rect.width
+                        entity.rect.y = self.draw_rect.y + self.draw_rect.height
+                    elif edge == "BOTTOM_RIGHT":
+                        entity.rect.x = self.draw_rect.x + entity.rect.width
+                        entity.rect.y = self.draw_rect.y + self.draw_rect.height
 
     def is_colliding(self, entity):
         return self.draw_rect.colliderect(entity.rect)
@@ -498,13 +499,13 @@ class SceneTXM(object):
                         entity.follow(player)
 
                     if entity.collides(player) or player.collides(entity):
-                        player.take_damage(0.1)
+                        player.take_damage(0.2)
 
                     if player.attacking != 0:
                         if entity.rect.colliderect(player.atkr) or (
                                 entity.rect.colliderect(player.rect) and entity.rect.colliderect(player.atkr)):
                             entity.hurting = 100
-                            entity.health -= 0.5
+                            entity.health -= 0.8
 
                     if entity.health <= 0:
                         self.entities["ENEMIES"].pop(index)
@@ -533,7 +534,6 @@ class Game:
         self.msc = pygame.mixer.Sound(consts.MANIFEST["AUDIO"]["MUSIC"]["game"])
         self.msc.set_volume(0.01)
         if consts.SETTINGS["MUSIC"]:
-            print("Music is on")
             self.music.play(self.msc, -1)
         else:
             self.music.stop()
