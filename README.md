@@ -1,3 +1,5 @@
+# [Checkout the full release!](https://github.com/PlaceholderGames/2020-yr1-group-3/releases/1.0.0)
+
 # The BeerZerker
 ## You are the ‘BeerZerker’; a local resident of the town, Darlstream. 
 
@@ -12,7 +14,5 @@
 ## The goal is to drink all the beer in the area, once you have done this by the means you desire you can move on to the next area and start again.
 
 <br />
-
-[Try out the latest build!](https://github.com/PlaceholderGames/2020-yr1-group-3/releases/latest)
 
 ### Developed by CS1S464 2020-21 Year 1 Group 3
