@@ -181,17 +181,17 @@ def main():
         # Quit game if player screen reaches Screens.QUIT
         #
         elif consts.current_screen == Screens.QUIT:
-            if consts.game is None:
-                if not pygame.mixer.get_busy():
-                    consts.LOGGER.info("VALHALLA", "QUIT Screen recognised. Quitting game...")
-                    pygame.quit()
-                    util.quit_game()
+            if not pygame.mixer.get_busy():
+                consts.LOGGER.info("VALHALLA", "QUIT Screen recognised. Quitting game...")
+                pygame.quit()
+                util.quit_game()
             else:
-                if consts.game.music.get_busy():
-                    consts.game.music.stop()
-                    consts.LOGGER.info("VALHALLA", "QUIT Screen recognised. Quitting game...")
-                    pygame.quit()
-                    util.quit_game()
+                if consts.game is not None:
+                    if consts.game.music.get_busy():
+                        consts.game.music.stop()
+                        consts.LOGGER.info("VALHALLA", "QUIT Screen recognised. Quitting game...")
+                        pygame.quit()
+                        util.quit_game()
 
 
         elif consts.current_screen == Screens.SOUND_WARNING:

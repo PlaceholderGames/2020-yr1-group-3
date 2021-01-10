@@ -719,6 +719,7 @@ class GameOverOverlay(GUIScreen):
 
     def play_action(self):
         consts.LOGGER.debug("VALHALLA", "Going back to game")
+        consts.game.music.stop()
         if self.playerWon():
             consts.game.paused = False
             consts.game.scenes[consts.current_scene].entities["ENEMIES"].append(1)
@@ -731,6 +732,7 @@ class GameOverOverlay(GUIScreen):
             consts.game = Game()
 
     def quit_action(self):
+        consts.game.music.stop()
         with open("data/score.dat", "w") as file:
             if consts.score >= consts.high_score:
                 file.write(str(consts.score))
