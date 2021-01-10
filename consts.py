@@ -7,7 +7,7 @@ from util import Logger, Mouse
 
 running = True
 game = None
-version = "0.14.3"
+version = "0.14.4"
 
 current_screen = Screens.SPLASHSCREEN
 last_screen = Screens.SPLASHSCREEN
