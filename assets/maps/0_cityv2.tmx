@@ -369,8 +369,8 @@
   <object id="126" name="Portal" type="portal" x="385.455" y="-3.65909" width="101.25" height="9.125">
    <properties>
     <property name="edge" value="top"/>
-    <property name="player_x" type="int" value="400"/>
-    <property name="player_y" type="int" value="570"/>
+    <property name="player_x" type="int" value="470"/>
+    <property name="player_y" type="int" value="880"/>
     <property name="scene_id" type="int" value="1"/>
     <property name="show" type="bool" value="true"/>
    </properties>
@@ -378,8 +378,8 @@
   <object id="133" name="Portal" type="portal" x="764.163" y="319.939" width="7.72727" height="94.0303">
    <properties>
     <property name="edge" value="right"/>
-    <property name="player_x" type="int" value="0"/>
-    <property name="player_y" type="int" value="0"/>
+    <property name="player_x" type="int" value="20"/>
+    <property name="player_y" type="int" value="420"/>
     <property name="scene_id" type="int" value="3"/>
     <property name="show" type="bool" value="true"/>
    </properties>
