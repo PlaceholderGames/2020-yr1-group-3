@@ -281,6 +281,7 @@
   <object id="41" name="Lake" type="collider" x="448" y="128" width="32" height="128"/>
   <object id="42" name="Lake" type="collider" x="416" y="192" width="32" height="64"/>
   <object id="110" name="Tree" type="collider" x="647.455" y="749.818" width="22" height="16">
+
    <ellipse/>
   </object>
   <object id="112" name="Tree" type="collider" x="692.727" y="711.455" width="20.1818" height="17.0909">
