@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.4" tiledversion="1.4.3" orientation="orthogonal" renderorder="right-down" width="24" height="24" tilewidth="32" tileheight="32" infinite="0" nextlayerid="15" nextobjectid="120">
+<map version="1.4" tiledversion="1.4.3" orientation="orthogonal" renderorder="right-down" width="24" height="24" tilewidth="32" tileheight="32" infinite="0" nextlayerid="17" nextobjectid="134">
  <tileset firstgid="1" source="../textures/spritesheets/Tilesetv4.tsx"/>
  <layer id="1" name="Dirt" width="24" height="24">
   <data encoding="csv">
@@ -142,7 +142,7 @@
 </data>
  </layer>
  <objectgroup id="14" name="Player">
-  <object id="1" name="Player" type="player" x="321.5" y="577.563"/>
+  <object id="1" name="Player" type="player" x="286" y="568.563"/>
  </objectgroup>
  <objectgroup id="13" name="Enemies">
   <object id="2" name="Enemy" type="enemy" x="390.375" y="299.083"/>
@@ -263,67 +263,67 @@
 </data>
  </layer>
  <objectgroup id="11" name="Collisions">
-  <object id="48" name="House of Freya" type="building" x="82" y="345" width="92" height="324.5"/>
-  <object id="49" name="Barrel" type="building" x="163.455" y="641.273" width="22.7273" height="31.0909"/>
-  <object id="50" name="House of Sif" type="building" x="273" y="414" width="188.25" height="96"/>
-  <object id="51" name="Bed" type="building" x="350.75" y="585.75" width="63.5" height="19"/>
-  <object id="52" name="Barrel" type="building" x="419" y="577.25" width="25.25" height="30.5"/>
-  <object id="53" name="Campfire" type="building" x="387.25" y="614" width="27" height="22"/>
-  <object id="56" name="Weapon" type="building" x="322.5" y="608.75" width="61.5" height="31.5"/>
-  <object id="59" name="House of Heimdallr" type="building" x="241" y="184" width="93" height="166.667"/>
-  <object id="61" name="Barrel" type="building" x="323.333" y="322.333" width="22" height="28.3333"/>
-  <object id="67" name="Guest House" type="building" x="81" y="159" width="94" height="94.3333"/>
-  <object id="69" name="Barrel" type="building" x="355.25" y="65" width="22.75" height="27.75"/>
-  <object id="71" name="Dwarven Hall" type="building" x="80.3333" y="0.666667" width="288.667" height="93.6667"/>
-  <object id="89" name="Tree" type="building" x="513.5" y="10.25" width="30.25" height="22.25">
+  <object id="48" name="House of Freya" type="collider" x="82" y="345" width="92" height="324.5"/>
+  <object id="49" name="Barrel" type="collider" x="163.455" y="641.273" width="22.7273" height="31.0909"/>
+  <object id="50" name="House of Sif" type="collider" x="273" y="414" width="188.25" height="96"/>
+  <object id="51" name="Bed" type="collider" x="350.75" y="585.75" width="63.5" height="19"/>
+  <object id="52" name="Barrel" type="collider" x="419" y="577.25" width="25.25" height="30.5"/>
+  <object id="53" name="Campfire" type="collider" x="387.25" y="614" width="27" height="22"/>
+  <object id="56" name="Weapon" type="collider" x="322.5" y="608.75" width="61.5" height="31.5"/>
+  <object id="59" name="House of Heimdallr" type="collider" x="241" y="184" width="93" height="166.667"/>
+  <object id="61" name="Barrel" type="collider" x="323.333" y="322.333" width="22" height="28.3333"/>
+  <object id="67" name="Guest House" type="collider" x="81" y="159" width="94" height="94.3333"/>
+  <object id="69" name="Barrel" type="collider" x="355.25" y="65" width="22.75" height="27.75"/>
+  <object id="71" name="Dwarven Hall" type="collider" x="80.3333" y="0.666667" width="288.667" height="93.6667"/>
+  <object id="89" name="Tree" type="collider" x="513.5" y="10.25" width="30.25" height="22.25">
    <ellipse/>
   </object>
-  <object id="91" name="Tree" type="building" x="469.25" y="103.25" width="24.5" height="21">
+  <object id="91" name="Tree" type="collider" x="469.25" y="103.25" width="24.5" height="21">
    <ellipse/>
   </object>
-  <object id="92" name="Tree" type="building" x="545.25" y="142.25" width="31.5" height="17.25">
+  <object id="92" name="Tree" type="collider" x="545.25" y="142.25" width="31.5" height="17.25">
    <ellipse/>
   </object>
-  <object id="96" name="Tree" type="building" x="624.5" y="137.25" width="30" height="14.75">
+  <object id="96" name="Tree" type="collider" x="624.5" y="137.25" width="30" height="14.75">
    <ellipse/>
   </object>
-  <object id="98" name="Tree" type="building" x="481.25" y="204.75" width="28.25" height="15.75">
+  <object id="98" name="Tree" type="collider" x="481.25" y="204.75" width="28.25" height="15.75">
    <ellipse/>
   </object>
-  <object id="102" name="Tree" type="building" x="528.75" y="327" width="25.25" height="17.75">
+  <object id="102" name="Tree" type="collider" x="528.75" y="327" width="25.25" height="17.75">
    <ellipse/>
   </object>
-  <object id="103" name="Tree" type="building" x="568" y="357" width="19.75" height="21.75">
+  <object id="103" name="Tree" type="collider" x="568" y="357" width="19.75" height="21.75">
    <ellipse/>
   </object>
-  <object id="108" name="Tree" type="building" x="534.75" y="455.75" width="21" height="15.75">
+  <object id="108" name="Tree" type="collider" x="534.75" y="455.75" width="21" height="15.75">
    <ellipse/>
   </object>
-  <object id="109" name="Tree" type="building" x="613" y="492.75" width="26.5" height="17.25">
+  <object id="109" name="Tree" type="collider" x="613" y="492.75" width="26.5" height="17.25">
    <ellipse/>
   </object>
-  <object id="112" name="Tree" type="building" x="597.25" y="584.75" width="23.25" height="15.75">
+  <object id="112" name="Tree" type="collider" x="597.25" y="584.75" width="23.25" height="15.75">
    <ellipse/>
   </object>
-  <object id="113" name="Tree" type="building" x="503.25" y="616" width="21.75" height="17.5">
+  <object id="113" name="Tree" type="collider" x="503.25" y="616" width="21.75" height="17.5">
    <ellipse/>
   </object>
-  <object id="114" name="Tree" type="building" x="545.25" y="716.25" width="27" height="17.75">
+  <object id="114" name="Tree" type="collider" x="545.25" y="716.25" width="27" height="17.75">
    <ellipse/>
   </object>
-  <object id="115" name="Tree" type="building" x="470" y="744.25" width="21.75" height="17.75">
+  <object id="115" name="Tree" type="collider" x="470" y="744.25" width="21.75" height="17.75">
    <ellipse/>
   </object>
-  <object id="116" name="Tree" type="building" x="371" y="743.5" width="23.25" height="16.25">
+  <object id="116" name="Tree" type="collider" x="371" y="743.5" width="23.25" height="16.25">
    <ellipse/>
   </object>
-  <object id="117" name="Tree" type="building" x="193.75" y="749" width="25.25" height="16.75">
+  <object id="117" name="Tree" type="collider" x="193.75" y="749" width="25.25" height="16.75">
    <ellipse/>
   </object>
-  <object id="118" name="Tree" type="building" x="20" y="707" width="20.3333" height="22.6667">
+  <object id="118" name="Tree" type="collider" x="20" y="707" width="20.3333" height="22.6667">
    <ellipse/>
   </object>
-  <object id="119" name="Tree" type="building" x="40.3333" y="729.333" width="0.333333">
+  <object id="119" name="Tree" type="collider" x="40.3333" y="729.333" width="0.333333">
    <ellipse/>
   </object>
  </objectgroup>
@@ -364,5 +364,25 @@
   <object id="39" name="Bottle" type="bottle" x="698" y="31"/>
   <object id="41" name="Bottle" type="bottle" x="743.636" y="32.1818"/>
   <object id="42" name="Bottle" type="bottle" x="721" y="58"/>
+ </objectgroup>
+ <objectgroup id="15" name="Portal">
+  <object id="126" name="Portal" type="portal" x="385.455" y="-3.65909" width="101.25" height="9.125">
+   <properties>
+    <property name="edge" value="top"/>
+    <property name="player_x" type="int" value="400"/>
+    <property name="player_y" type="int" value="570"/>
+    <property name="scene_id" type="int" value="1"/>
+    <property name="show" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="133" name="Portal" type="portal" x="764.163" y="319.939" width="7.72727" height="94.0303">
+   <properties>
+    <property name="edge" value="right"/>
+    <property name="player_x" type="int" value="0"/>
+    <property name="player_y" type="int" value="0"/>
+    <property name="scene_id" type="int" value="3"/>
+    <property name="show" type="bool" value="true"/>
+   </properties>
+  </object>
  </objectgroup>
 </map>

@@ -264,124 +264,124 @@
 </data>
  </layer>
  <objectgroup id="12" name="Collisions">
-  <object id="88" type="building" x="409.667" y="352" width="0.333333"/>
-  <object id="89" name="Barrel" type="building" x="385.667" y="319.667" width="24.3333" height="32.3333"/>
-  <object id="91" name="Campfire" type="building" x="431.667" y="368"/>
-  <object id="92" type="building" x="368" y="304.333"/>
-  <object id="93" name="Campfire" type="building" x="368" y="304.333"/>
-  <object id="95" name="Bed" type="building" x="352" y="362" width="60" height="19.3333"/>
-  <object id="98" name="Bed" type="building" x="415.5" y="328.75" width="62.25" height="20.25"/>
-  <object id="100" name="Bed" type="building" x="288" y="297.5" width="61" height="19"/>
-  <object id="108" name="Bed" type="building" x="351.875" y="265" width="63.5" height="20"/>
-  <object id="120" name="Tree" type="building" x="629.273" y="709.636" width="20.7273" height="19.4545">
+  <object id="88" type="collider" x="409.667" y="352" width="0.333333"/>
+  <object id="89" name="Barrel" type="collider" x="385.667" y="319.667" width="24.3333" height="32.3333"/>
+  <object id="91" name="Campfire" type="collider" x="431.667" y="368"/>
+  <object id="92" type="collider" x="368" y="304.333"/>
+  <object id="93" name="Campfire" type="collider" x="368" y="304.333"/>
+  <object id="95" name="Bed" type="collider" x="352" y="362" width="60" height="19.3333"/>
+  <object id="98" name="Bed" type="collider" x="415.5" y="328.75" width="62.25" height="20.25"/>
+  <object id="100" name="Bed" type="collider" x="288" y="297.5" width="61" height="19"/>
+  <object id="108" name="Bed" type="collider" x="351.875" y="265" width="63.5" height="20"/>
+  <object id="120" name="Tree" type="collider" x="629.273" y="709.636" width="20.7273" height="19.4545">
    <ellipse/>
   </object>
-  <object id="121" name="Tree" type="building" x="707.091" y="716" width="22.7273" height="17.6364">
+  <object id="121" name="Tree" type="collider" x="707.091" y="716" width="22.7273" height="17.6364">
    <ellipse/>
   </object>
-  <object id="122" name="Tree" type="building" x="550.375" y="684" width="21.6875" height="17.3125">
+  <object id="122" name="Tree" type="collider" x="550.375" y="684" width="21.6875" height="17.3125">
    <ellipse/>
   </object>
-  <object id="125" name="Tree" type="building" x="697.545" y="615.182" width="17.0909" height="16.5455">
+  <object id="125" name="Tree" type="collider" x="697.545" y="615.182" width="17.0909" height="16.5455">
    <ellipse/>
   </object>
-  <object id="126" name="Tree" type="building" x="598.091" y="552.455" width="15.9091" height="15.7273">
+  <object id="126" name="Tree" type="collider" x="598.091" y="552.455" width="15.9091" height="15.7273">
    <ellipse/>
   </object>
-  <object id="129" name="Tree" type="building" x="678.182" y="526" width="22.6364" height="14.1818">
+  <object id="129" name="Tree" type="collider" x="678.182" y="526" width="22.6364" height="14.1818">
    <ellipse/>
   </object>
-  <object id="130" name="Tree" type="building" x="692" y="486" width="22.875" height="16.875">
+  <object id="130" name="Tree" type="collider" x="692" y="486" width="22.875" height="16.875">
    <ellipse/>
   </object>
-  <object id="131" name="Tree" type="building" x="708.625" y="393.75" width="25.875" height="20.5">
+  <object id="131" name="Tree" type="collider" x="708.625" y="393.75" width="25.875" height="20.5">
    <ellipse/>
   </object>
-  <object id="132" name="Tree" type="building" x="725.091" y="326.182" width="21.8182" height="20.7273">
+  <object id="132" name="Tree" type="collider" x="725.091" y="326.182" width="21.8182" height="20.7273">
    <ellipse/>
   </object>
-  <object id="133" name="Tree" type="building" x="724.75" y="165" width="18.75" height="20.5">
+  <object id="133" name="Tree" type="collider" x="724.75" y="165" width="18.75" height="20.5">
    <ellipse/>
   </object>
-  <object id="134" name="Tree" type="building" x="696.5" y="71" width="17" height="17.5">
+  <object id="134" name="Tree" type="collider" x="696.5" y="71" width="17" height="17.5">
    <ellipse/>
   </object>
-  <object id="135" name="Tree" type="building" x="630.125" y="70" width="16.75" height="17.875">
+  <object id="135" name="Tree" type="collider" x="630.125" y="70" width="16.75" height="17.875">
    <ellipse/>
   </object>
-  <object id="136" name="Tree" type="building" x="450.364" y="41.6364" width="25.8182" height="18.7273">
+  <object id="136" name="Tree" type="collider" x="450.364" y="41.6364" width="25.8182" height="18.7273">
    <ellipse/>
   </object>
-  <object id="137" name="Tree" type="building" x="341.273" y="100.364" width="19.2727" height="19.0909">
+  <object id="137" name="Tree" type="collider" x="341.273" y="100.364" width="19.2727" height="19.0909">
    <ellipse/>
   </object>
-  <object id="138" name="Tree" type="building" x="263.636" y="138.545" width="21.0909" height="19.4545">
+  <object id="138" name="Tree" type="collider" x="263.636" y="138.545" width="21.0909" height="19.4545">
    <ellipse/>
   </object>
-  <object id="139" name="Tree" type="building" x="244" y="71.4545" width="21.6364" height="16.5455">
+  <object id="139" name="Tree" type="collider" x="244" y="71.4545" width="21.6364" height="16.5455">
    <ellipse/>
   </object>
-  <object id="140" name="Tree" type="building" x="162.727" y="108.364" width="23.6364" height="18.3636">
+  <object id="140" name="Tree" type="collider" x="162.727" y="108.364" width="23.6364" height="18.3636">
    <ellipse/>
   </object>
-  <object id="141" name="Tree" type="building" x="226.5" y="234.5" width="24.75" height="20">
+  <object id="141" name="Tree" type="collider" x="226.5" y="234.5" width="24.75" height="20">
    <ellipse/>
   </object>
-  <object id="142" name="Tree" type="building" x="148.5" y="231" width="19.25" height="17.5">
+  <object id="142" name="Tree" type="collider" x="148.5" y="231" width="19.25" height="17.5">
    <ellipse/>
   </object>
-  <object id="143" name="Tree" type="building" x="52.9091" y="103.455" width="19.0909" height="16.7273">
+  <object id="143" name="Tree" type="collider" x="52.9091" y="103.455" width="19.0909" height="16.7273">
    <ellipse/>
   </object>
-  <object id="144" name="Tree" type="building" x="23.4545" y="133.818" width="20" height="19.0909">
+  <object id="144" name="Tree" type="collider" x="23.4545" y="133.818" width="20" height="19.0909">
    <ellipse/>
   </object>
-  <object id="145" name="Tree" type="building" x="23.8182" y="231.636" width="19.6364" height="17.8182">
+  <object id="145" name="Tree" type="collider" x="23.8182" y="231.636" width="19.6364" height="17.8182">
    <ellipse/>
   </object>
-  <object id="148" name="Tree" type="building" x="55.0909" y="325.636" width="21.6364" height="19.6364">
+  <object id="148" name="Tree" type="collider" x="55.0909" y="325.636" width="21.6364" height="19.6364">
    <ellipse/>
   </object>
-  <object id="149" name="Tree" type="building" x="149.455" y="358.909" width="18.7273" height="16.9091">
+  <object id="149" name="Tree" type="collider" x="149.455" y="358.909" width="18.7273" height="16.9091">
    <ellipse/>
   </object>
-  <object id="150" name="Tree" type="building" x="68.1818" y="427.636" width="26" height="17.6364">
+  <object id="150" name="Tree" type="collider" x="68.1818" y="427.636" width="26" height="17.6364">
    <ellipse/>
   </object>
-  <object id="151" name="Tree" type="building" x="-9.45455" y="518.545" width="21.4545" height="20.9091">
+  <object id="151" name="Tree" type="collider" x="-9.45455" y="518.545" width="21.4545" height="20.9091">
    <ellipse/>
   </object>
-  <object id="154" name="Tree" type="building" x="116.909" y="518.727" width="20.9091" height="19.2727">
+  <object id="154" name="Tree" type="collider" x="116.909" y="518.727" width="20.9091" height="19.2727">
    <ellipse/>
   </object>
-  <object id="156" name="Tree" type="building" x="214.909" y="486.909" width="20.1818" height="17.6364">
+  <object id="156" name="Tree" type="collider" x="214.909" y="486.909" width="20.1818" height="17.6364">
    <ellipse/>
   </object>
-  <object id="157" name="Tree" type="building" x="387.75" y="556.25" width="21.5" height="18.75">
+  <object id="157" name="Tree" type="collider" x="387.75" y="556.25" width="21.5" height="18.75">
    <ellipse/>
   </object>
-  <object id="159" name="Tree" type="building" x="344.75" y="613.25" width="17.25" height="18.5">
+  <object id="159" name="Tree" type="collider" x="344.75" y="613.25" width="17.25" height="18.5">
    <ellipse/>
   </object>
-  <object id="160" name="Tree" type="building" x="277.25" y="583" width="18.5" height="18.75">
+  <object id="160" name="Tree" type="collider" x="277.25" y="583" width="18.5" height="18.75">
    <ellipse/>
   </object>
-  <object id="161" name="Tree" type="building" x="278.75" y="678" width="21.5" height="18.25">
+  <object id="161" name="Tree" type="collider" x="278.75" y="678" width="21.5" height="18.25">
    <ellipse/>
   </object>
-  <object id="162" name="Tree" type="building" x="192.5" y="621.5" width="26.75" height="17">
+  <object id="162" name="Tree" type="collider" x="192.5" y="621.5" width="26.75" height="17">
    <ellipse/>
   </object>
-  <object id="164" name="Tree" type="building" x="178.5" y="710.75" width="22.25" height="19.5">
+  <object id="164" name="Tree" type="collider" x="178.5" y="710.75" width="22.25" height="19.5">
    <ellipse/>
   </object>
-  <object id="165" name="Tree" type="building" x="87" y="742.5" width="22" height="18">
+  <object id="165" name="Tree" type="collider" x="87" y="742.5" width="22" height="18">
    <ellipse/>
   </object>
-  <object id="166" name="Tree" type="building" x="20.25" y="710.25" width="20.25" height="20.75">
+  <object id="166" name="Tree" type="collider" x="20.25" y="710.25" width="20.25" height="20.75">
    <ellipse/>
   </object>
-  <object id="167" name="Tree" type="building" x="84.5" y="614.5" width="21" height="18.5">
+  <object id="167" name="Tree" type="collider" x="84.5" y="614.5" width="21" height="18.5">
    <ellipse/>
   </object>
  </objectgroup>
