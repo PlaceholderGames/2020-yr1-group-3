@@ -85,6 +85,9 @@ class Player(Entity):
         self.rect_colour = (81, 81, 81)
         self.sprinting = False
 
+        self.enemies_killed = 0
+        self.bottles_drunk = 0
+
         self.texture = Image(consts.MANIFEST["TEXTURES"]["SPRITES"]["player"]).render()
         # upper_body = pygame.transform.scale(Spritesheet(consts.MANIFEST["TEXTURES"]["SPRITES"]["player"]).image_at((0,0, 32, 32), -1), (15, 15))
         # lower_body = pygame.transform.scale(Spritesheet(consts.MANIFEST["TEXTURES"]["SPRITES"]["player"]).image_at((0, 32, 32, 32), -1), (15, 15))
@@ -163,6 +166,7 @@ class Player(Entity):
                         pygame.mixer.Sound(consts.MANIFEST["AUDIO"]["SOUNDS"]["GAME"]["drink_use"]).play()
                     self.items.pop(index)
                     self.drunkenness += 20
+                    self.bottles_drunk += 1
 
     def add_item(self, item):
         self.items.append(item)
@@ -504,6 +508,7 @@ class SceneTXM(object):
 
                     if entity.health <= 0:
                         self.entities["ENEMIES"].pop(index)
+                        player.enemies_killed += 1
 
                 elif type(entity) == Bottle:
                     if entity.picked_up(player):
@@ -583,8 +588,7 @@ class Game:
 
         currentScene.update(self.player)
 
-        consts.score = int((self.player.health + self.player.drunkenness) + (
-                    (currentScene.enemy_length - currentScene.remaining_enemies()) * 2))
+        consts.score = (self.player.enemies_killed * 500) + (self.player.bottles_drunk * 20) # int((self.player.health + self.player.drunkenness) + ((currentScene.enemy_length - currentScene.remaining_enemies()) * 2))
 
         if self.player.health <= 0 or currentScene.remaining_enemies() == 0 or self.player.drunkenness < 9:
             self.game_over = True
