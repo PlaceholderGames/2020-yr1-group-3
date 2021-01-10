@@ -331,9 +331,10 @@ class GUIScreen(pygame.Surface):
                         link.click()
 
     def handle_key_event(self):
-        for event in pygame.event.get():
-            if event.type == pygame.KEYUP:
-                consts.LOGGER.debug("VALHALLA", f"{pygame.key.name(event.key).capitalize()} key pressed")
+        # for event in pygame.event.get():
+        #     if event.type == pygame.KEYUP:
+        #         consts.LOGGER.debug("VALHALLA", f"{pygame.key.name(event.key).capitalize()} key pressed")
+        pass
 
 
     def render(self):
@@ -640,7 +641,7 @@ class PauseOverlay(GUIScreen):
 
     def play_action(self):
         consts.LOGGER.debug("VALHALLA", "Going back to game")
-        consts.game.paused = False
+        consts.game.pause(False)
 
     def settings_action(self):
         consts.last_screen = Screens.GAME
@@ -652,7 +653,7 @@ class PauseOverlay(GUIScreen):
 
     def quit_action(self):
         consts.current_screen = Screens.MAIN_MENU
-        consts.game.paused = False
+        consts.game.pause(False)
 
     def __init__(self):
         super().__init__()
@@ -987,14 +988,15 @@ class MainMenu(GUIScreen):
 
         version_text_link = Link(version_text, "https://github.com/PlaceholderGames/2020-yr1-group-3/releases/latest")
 
-        controls_title_text = Text("Controls:", "Pixellari", 26, x=controls_title_offset[0],
-                                   y=window_height + controls_title_offset[1])
+        controls_text = Text("Controls:", "Pixellari", 28)
+        move_text = Text("WASD / arrow keys to move", "Pixellari", 26)
+        sprint_text = Text("Hold shift to sprint", "Pixellari", 26)
+        attack_text = Text("Left click to attack", "Pixellari", 26)
 
-        move_text = Text("WASD or arrow keys to move", "Pixellari", 26, x=move_offset[0],
-                         y=window_height + move_offset[1])
-
-        attack_text = Text("Left click to attack", "Pixellari", 26, x=attack_offset[0],
-                           y=window_height + attack_offset[1])
+        attack_text.set_pos((8, window_height - attack_text.get_size()[1] - 6))
+        sprint_text.set_pos((8, attack_text.get_pos()[1] - attack_text.get_size()[1] - 4))
+        move_text.set_pos((8, sprint_text.get_pos()[1] - sprint_text.get_size()[1] - 4))
+        controls_text.set_pos((8, move_text.get_pos()[1] - move_text.get_size()[1] - 6))
 
         self.add_element("Logo", logo_temp_text)
         self.add_element("Play", self.play_button)
@@ -1004,8 +1006,9 @@ class MainMenu(GUIScreen):
 
         self.add_element("High Score", score_text)
         self.add_element("Version", version_text_link)
-        self.add_element("Controls text", controls_title_text)
+        self.add_element("Controls text", controls_text)
         self.add_element("Move controls text", move_text)
+        self.add_element("Sprint control text", sprint_text)
         self.add_element("Attack controls text", attack_text)
 
     def render(self):
@@ -1184,6 +1187,7 @@ class CreditScreen(GUIScreen):
         bitheral_link = "https://bitheral.net"
         bartosz_link = "https://github.com/BartoszTrylockSW"
         connor_link = "https://github.com/SirJinxy"
+        munknorr_link = "http://munknorr.com"
 
         lead_programmer_title = Text(
             "Lead Programmer",
@@ -1253,6 +1257,21 @@ class CreditScreen(GUIScreen):
             y=audio_design_title.get_pos()[1] + audio_design_title.get_size()[1]
         ), bitheral_link)
 
+        music_title = Text(
+            "Music",
+            "Pixellari",
+            30,
+            x=lead_programmer_title.get_pos()[0] + lead_programmer_title.get_size()[0] + 32,
+            y=lead_programmer_title.get_pos()[1]
+        )
+        music_credit = Link(Text(
+            "Munknörr / Damián Schneider",
+            "Pixellari",
+            26,
+            x=music_title.get_pos()[0],
+            y=music_title.get_pos()[1] + music_title.get_size()[1]
+        ), munknorr_link)
+
         back_text = Text("Back", "Pixellari", 26)
         back_button = Button(
             back_text,
@@ -1275,5 +1294,8 @@ class CreditScreen(GUIScreen):
 
         self.add_element("Audio design title", audio_design_title)
         self.add_element("Audio design credit", audio_design_credit)
+
+        self.add_element("Music title", music_title)
+        self.add_element("Music credit", music_credit)
 
         self.add_element("Back button", back_button)

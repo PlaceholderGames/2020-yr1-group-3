@@ -1,22 +1,19 @@
 import os
 import sys
-import subprocess
+# import subprocess
 import pkg_resources
-import platform
+# import platform
 
 required = {'pygame', 'pytmx'}
 installed = {pkg.key for pkg in pkg_resources.working_set}
 missing = required - installed
 
-python = sys.executable
-
-
-def cls():
-    os.system('cls' if os.name=='nt' else 'clear')
+def install_python_package(package):
+    os.system(f'python -m pip install {package}')
 
 if missing:
     for module in missing:
-        subprocess.check_call([python, '-m', 'pip', 'install', module])
+        install_python_package(module)
 
-cls()
 import main
+sys.exit()
